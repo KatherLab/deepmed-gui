@@ -1,0 +1,1 @@
+{"ProjectName":"TCGA-PAAD-DX","folderName":{"Temp":"E:\\"},"codename":"tcga-paad-generated","allTargets":["ajcc_pathologic_stage","gender","ARID1A_driver"]}

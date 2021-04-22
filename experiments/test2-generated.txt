@@ -1,0 +1,1 @@
+{'ProjectName': 'abcde', 'folderName': {'-'}, 'codename': 'abcde-generated', 'allTargets': []}

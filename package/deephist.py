@@ -22,6 +22,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.folderpath.clicked.connect(self.open_folderpath)
         self.ui.testbutton.clicked.connect(self.testbutton_click)
         self.ui.reset_expgen.clicked.connect(self.resetbutton_click)
+        self.ui.runexpgen.clicked.connect(self.runbutton_click)
         ###########
 
         #Events autoDeeplearn
@@ -77,6 +78,25 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.folderpath_path = "-"
         self.ui.choosetarg.clear()
         self.testbutton_click()
+
+    def runbutton_click(self):
+        codename=self.ui.projectname.text() + "-generated"
+
+        text={"ProjectName":self.ui.projectname.text(),"folderName":{"Temp":self.folderpath_path},"codename":codename,"allTargets":[str(x.text()) for x in self.ui.choosetarg.selectedItems()]}
+        a=os.path.exists("experiments/"+codename+".txt")
+        if a==True:
+            QtWidgets.QMessageBox.critical(self, "File already exists", "File already exists  \n please choose another projectname")
+
+        else:
+            # "no experiment file with same name, can safe text as "experiments/"+codename+".txt" in folder
+            filename="experiments/"+codename+".txt"
+            text=str(text).replace(" ","")
+            text=text.replace("\'","\"")
+            f = open(filename, "w")
+            f.write(text)
+            f.close()
+
+
 app = QtWidgets.QApplication(sys.argv)
 widget = Mainwindow_con()
 widget.show()
