@@ -1,6 +1,7 @@
 import sys
 from PyQt5 import QtCore, QtGui, QtWidgets
 from package.mainwindow import Ui_gui_histo_main
+from package.advanced_settings import Ui_advanced_settings
 import os
 import pandas as pd
 
@@ -17,12 +18,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.patmasttab_path = "-"
         self.folderpath_path = "-"
 
-        self.ui.slidmasttab.clicked.connect(self.open_slidmasttab)
-        self.ui.patmasttab.clicked.connect(self.open_patmasttab)
-        self.ui.folderpath.clicked.connect(self.open_folderpath)
-        self.ui.testbutton.clicked.connect(self.testbutton_click)
-        self.ui.reset_expgen.clicked.connect(self.resetbutton_click)
-        self.ui.runexpgen.clicked.connect(self.runbutton_click)
+
+        self.ui.advanced_sets.clicked.connect(self.advanced_sets_clicked)
         ###########
 
         #Events autoDeeplearn
@@ -31,6 +28,15 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         ###########
         # Events autoVisualize
         ###########
+
+    def advanced_sets_clicked(self, checked=None):
+        if checked == None: return
+        dialog = QtWidgets.QDialog()
+        dialog.ui = Ui_advanced_settings()
+        dialog.ui.setupUi(dialog)
+        dialog.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        dialog.exec_()
+
 
     def open_slidmasttab(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData",
