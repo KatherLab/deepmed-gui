@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
+
 class Mainwindow_con(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -20,8 +21,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.slidmasttab_path = " "  # empty values
         self.patmasttab_path = " "  # empty values
         self.folderpath_path = " "  # empty values
-        self.plotter() # open function to plot graphics
-        self.value = [0,0]  # basic values from advanced settings NEEDS TO BE SET
+        self.plotter()  # open function to plot graphics
+        self.value = [0, 0]  # basic values from advanced settings NEEDS TO BE SET
 
         self.ui.slide_masttab.clicked.connect(self.open_slidmasttab)
         self.ui.clini_table.clicked.connect(self.open_patmasttab)
@@ -35,16 +36,15 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         # Events Visualize
         ###########
 
-
     def plotter(self):
-        
+
         scene = QtWidgets.QGraphicsScene()
         plt.style.use('classic')
         figure = Figure()
         axes = figure.gca()
         axes.set_title("Training Plot")
         x = np.linspace(0, 20, 100)
-        y = 0.9-np.exp(-x)+0.03*np.random.random(len(x))
+        y = 0.9 - np.exp(-x) + 0.03 * np.random.random(len(x))
         y2 = 0.7 - np.exp(-x) + 0.01 * np.random.random(len(x))
         axes.plot(x, y, label="train")
         axes.plot(x, y2, "-.", label="test")
@@ -59,7 +59,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.graph_autoDL.setScene(scene)
         self.ui.graph_autoDL.show()
 
-
     def open_slidmasttab(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData", "*.csv")
         if path != ('', ''):
@@ -72,33 +71,41 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if path != ('', ''):
             self.patmasttab_path = path[0]
 
-        if path[0]!="":
+        if path[0] != "":
             df = pd.read_excel(path[0])
             print(list(df))
             self.ui.choosetarg.clear()
             self.ui.choosetarg.addItems(list(df))
 
     def open_folderpath(self):
-        path = QtWidgets.QFileDialog.getExistingDirectory(self,"\home")
+        path = QtWidgets.QFileDialog.getExistingDirectory(self, "\home")
         if path != ('', ''):
             self.folderpath_path = path
 
     def runDL_click(self):
 
         t1 = "Projectname: " + self.ui.project_name.text()
-        t2= "SMT path: " + os.path.basename(self.slidmasttab_path)
-        t3= "PMT path: " + os.path.basename(self.patmasttab_path)
+        t2 = "SMT path: " + os.path.basename(self.slidmasttab_path)
+        t3 = "PMT path: " + os.path.basename(self.patmasttab_path)
         t4 = "folderpath: " + self.folderpath_path
         t5 = "chosen target(s): " + str([str(x.text()) for x in self.ui.choosetarg.selectedItems()])
-        t6= "max epochs: " + str(self.ui.max_epochs.text())
-        t7= "batch size: " + str(self.ui.batch_size.text())
-        t8= "max tile num: " + str(self.ui.maxTileNum.text())
-        text= t1 + "\n\n" + t2 + "\n\n" + t3 + "\n\n" + t4 + "\n\n" + t5 + "\n\n" + t6 + "\n\n" + t7 + "\n\n" + t8
-        t9="gpu num: "+str(self.value[0])
-        t10="binarize quantil: "+str(self.value[1])
+        t6 = "max epochs: " + str(self.ui.max_epochs.text())
+        t7 = "batch size: " + str(self.ui.batch_size.text())
+        t8 = "max tile num: " + str(self.ui.maxTileNum.text())
+        text = t1 + "\n\n" + t2 + "\n\n" + t3 + "\n\n" + t4 + "\n\n" + t5 + "\n\n" + t6 + "\n\n" + t7 + "\n\n" + t8
+        t9 = "gpu num: " + str(self.value[0])
+        t10 = "binarize quantil: " + str(self.value[1])
         text2 = t9 + "\n\n" + t10
         print(text)
         print(text2)
+
+        try:
+            #  try run function
+            #print(1 / 0)  # to simulate error
+        except:
+            # if not working raise dialog
+            QtWidgets.QMessageBox.critical(self, "Error",
+                                           "Oh no!  \n Something went wrong ")
 
     def resetDL_click(self):
         self.ui.project_name.clear()
@@ -113,7 +120,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
     def open_DL_dialog(self):
         """open advanced settings for Deep Learn"""
         my_dialog = MyDialog()
-        execval=my_dialog.exec_()
+        execval = my_dialog.exec_()
         if execval == True:
             self.value = my_dialog.save_advanced()  # values from dialog window
         print(self.value)
@@ -121,6 +128,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
 class MyDialog(QtWidgets.QDialog):
     """"advanced settings dialog for Deep Learn"""
+
     def __init__(self, parent=None):
         super(MyDialog, self).__init__(parent)
         self.ui = Ui_advanced_settings()
@@ -140,8 +148,6 @@ class MyDialog(QtWidgets.QDialog):
     def reset_advanced(self):
         self.ui.GPUnum.setProperty("value", 4)
         self.ui.binarize_quantile.setProperty("value", 14)
-
-
 
 
 app = QtWidgets.QApplication(sys.argv)
