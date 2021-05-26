@@ -21,7 +21,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.slidmasttab_path_DL = " "  # empty values
         self.patmasttab_path_DL = " "  # empty values
         self.folderpath_path_DL = " "  # empty values
-        self.tilepath_DL= " " #empty values
+        self.tilepath_DL = " "  # empty values
         self.advanced_values = [0, 0]  # basic values from advanced settings Default NEEDS TO BE SET
 
         self.ui.slide_masttab_DL.clicked.connect(self.open_slidmasttab)
@@ -36,10 +36,11 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
 
         # Events Deploy
-        self.cohort_path_deploy= ""
-        self.tile_dir_deploy = ""
-        self.model_path_deploy = ""
-        self.project_dir_open = ""
+        self.cohort_path_deploy = ""  # empty values
+        self.tile_dir_deploy = ""  # empty values
+        self.model_path_deploy = ""  # empty values
+        self.project_dir_open = ""  # empty values
+        self.patmasttab_path_deploy = " "  # empty values
 
         self.ui.projectdir_Deploy.clicked.connect(self.open_project_dir_Deploy)
         self.ui.choose_cohort_Deploy.clicked.connect(self.open_cohort_Deploy)
@@ -48,7 +49,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.run_Deploy.clicked.connect(self.run_Deploy_click)
         self.ui.reset_Deploy.clicked.connect(self.reset_Deploy_click)
         self.ui.advanced_Deploy.clicked.connect(self.advanced_Deploy_click)
-
+        self.ui.clini_table_Deploy.clicked.connect(self.open_patmasttab_deploy)
         ###########
         # Events Visualize
         ###########
@@ -166,8 +167,21 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if path != ('', ''):
             self.project_dir_open = path
 
+    def open_patmasttab_deploy(self):
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData", "*.xlsx")
+
+        if path != ('', ''):
+            self.patmasttab_path_deploy = path[0]
+
+        if path[0] != "":
+            df = pd.read_excel(path[0])
+            print(list(df))
+            self.ui.targetlabels_Deploy.setEnabled(True)
+            self.ui.targetlabels_Deploy.clear()
+            self.ui.targetlabels_Deploy.addItems(list(df))
+
     def open_cohort_Deploy(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cohort", "*.csv")
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cohorts", "*.txt")
         if path != ('', ''):
             self.cohort_path_deploy = path[0]
             print(path)
@@ -192,7 +206,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         t5 = "tile directory: " + str(self.tile_dir_deploy)
         t6 = "model path: " + str(self.cohort_path_deploy)
         t7 = "target evaluator" + str("yes")
-        text=t1 + "\n\n" + t2 + "\n\n" + t3 + "\n\n" + t4 + "\n\n" + t5 + "\n\n" + t6 + "\n\n" + t7
+        t8 = "chosen target(s): " + str([str(x.text()) for x in self.ui.targetlabels_Deploy.selectedItems()])
+        text=t1 + "\n\n" + t2 + "\n\n" + t3 + "\n\n" + t4 + "\n\n" + t5 + "\n\n" + t6 + "\n\n" + t7 + "\n\n" + t8
         print(text)
     def reset_Deploy_click(self):
         self.cohort_path_deploy = ""
