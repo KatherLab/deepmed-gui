@@ -36,14 +36,14 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
 
         # Events Deploy
-        self.cohort_path_deploy = ""  # empty values
+        self.slidmasttab_path_deploy = ""  # empty values
         self.tile_dir_deploy = ""  # empty values
         self.model_path_deploy = ""  # empty values
         self.project_dir_open = ""  # empty values
         self.patmasttab_path_deploy = " "  # empty values
 
         self.ui.projectdir_Deploy.clicked.connect(self.open_project_dir_Deploy)
-        self.ui.choose_cohort_Deploy.clicked.connect(self.open_cohort_Deploy)
+        self.ui.choose_slidetable_Deploy.clicked.connect(self.open_slidmasttab_Deploy)
         self.ui.choose_tiledir_Deploy.clicked.connect(self.open_tile_path)
         self.ui.choose_model_Deploy.clicked.connect(self.open_model_path_Deploy)
         self.ui.run_Deploy.clicked.connect(self.run_Deploy_click)
@@ -180,10 +180,10 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.ui.targetlabels_Deploy.clear()
             self.ui.targetlabels_Deploy.addItems(list(df))
 
-    def open_cohort_Deploy(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cohorts", "*.txt")
+    def open_slidmasttab_Deploy(self):
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData", "*.csv")
         if path != ('', ''):
-            self.cohort_path_deploy = path[0]
+            self.slidmasttab_path_deploy = path[0]
             print(path)
 
     def open_tile_dir_Deploy(self):
@@ -194,7 +194,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
     def open_model_path_Deploy(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/models", "*.csv")
         if path != ('', ''):
-            self.cohort_path_deploy = path[0]
+            self.model_path_deploy = path[0]
             print(path)
 
     def run_Deploy_click(self):
@@ -202,12 +202,15 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         t1 = "Project dir: " + str(self.project_dir_open)
         t2 = "batch size: " + str(self.ui.batchsize_Deploy.text())
         t3 = "max tile num: " + str(self.ui.maxtilenum_Deploy.text())
-        t4 = "cohort: " + str(self.cohort_path_deploy)
-        t5 = "tile directory: " + str(self.tile_dir_deploy)
-        t6 = "model path: " + str(self.cohort_path_deploy)
-        t7 = "target evaluator" + str("yes")
-        t8 = "chosen target(s): " + str([str(x.text()) for x in self.ui.targetlabels_Deploy.selectedItems()])
-        text=t1 + "\n\n" + t2 + "\n\n" + t3 + "\n\n" + t4 + "\n\n" + t5 + "\n\n" + t6 + "\n\n" + t7 + "\n\n" + t8
+
+        t4 = "SMT path: " + os.path.basename(self.slidmasttab_path_deploy)
+        t5 = "PMT path: " + os.path.basename(self.patmasttab_path_deploy)
+
+        t6 = "tile directory: " + str(self.tile_dir_deploy)
+        t7 = "model path: " + str(self.model_path_deploy)
+        t8 = "target evaluator" + str("yes")
+        t9 = "chosen target(s): " + str([str(x.text()) for x in self.ui.targetlabels_Deploy.selectedItems()])
+        text=t1 + "\n\n" + t2 + "\n\n" + t3 + "\n\n" + t4 + "\n\n" + t5 + "\n\n" + t6 + "\n\n" + t7 + "\n\n" + t8+ "\n\n" + t9
         print(text)
     def reset_Deploy_click(self):
         self.cohort_path_deploy = ""

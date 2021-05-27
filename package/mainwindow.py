@@ -194,9 +194,9 @@ class Ui_gui_histo_main(object):
         self.maxtilenum_Deploy.setProperty("value", 20)
         self.maxtilenum_Deploy.setObjectName("maxtilenum_Deploy")
         self.gridLayout_2.addWidget(self.maxtilenum_Deploy, 3, 1, 1, 1)
-        self.choose_cohort_Deploy = QtWidgets.QPushButton(self.Deploy)
-        self.choose_cohort_Deploy.setObjectName("choose_cohort_Deploy")
-        self.gridLayout_2.addWidget(self.choose_cohort_Deploy, 5, 1, 1, 1)
+        self.choose_slidetable_Deploy = QtWidgets.QPushButton(self.Deploy)
+        self.choose_slidetable_Deploy.setObjectName("choose_slidetable_Deploy")
+        self.gridLayout_2.addWidget(self.choose_slidetable_Deploy, 5, 1, 1, 1)
         self.label_7 = QtWidgets.QLabel(self.Deploy)
         self.label_7.setObjectName("label_7")
         self.gridLayout_2.addWidget(self.label_7, 0, 0, 1, 1)
@@ -359,7 +359,7 @@ class Ui_gui_histo_main(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(gui_histo_main)
-        self.Tabs.setCurrentIndex(0)
+        self.Tabs.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(gui_histo_main)
 
     def retranslateUi(self, gui_histo_main):
@@ -398,11 +398,11 @@ class Ui_gui_histo_main(object):
         self.label_24.setText(_translate("gui_histo_main", "model path"))
         self.label_27.setText(_translate("gui_histo_main", "max tile num"))
         self.run_Deploy.setText(_translate("gui_histo_main", "run"))
-        self.choose_cohort_Deploy.setText(_translate("gui_histo_main", "choose file"))
+        self.choose_slidetable_Deploy.setText(_translate("gui_histo_main", "choose file"))
         self.label_7.setText(_translate("gui_histo_main", "Settings:"))
         self.choose_tiledir_Deploy.setText(_translate("gui_histo_main", "choose folder"))
         self.label_25.setText(_translate("gui_histo_main", "target evaluator"))
-        self.label_21.setText(_translate("gui_histo_main", "cohort"))
+        self.label_21.setText(_translate("gui_histo_main", "slide table"))
         self.label_23.setText(_translate("gui_histo_main", "target labels"))
         self.label_22.setText(_translate("gui_histo_main", "tile directory"))
         self.target_eval_Deploy.setHtml(_translate("gui_histo_main", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
