@@ -57,6 +57,7 @@ class Ui_gui_histo_main(object):
         self.label_6.setObjectName("label_6")
         self.gridLayout.addWidget(self.label_6, 9, 0, 1, 1)
         self.maxTileNum_DL = QtWidgets.QSpinBox(self.Deeplearn)
+        self.maxTileNum_DL.setMaximum(99999)
         self.maxTileNum_DL.setProperty("value", 20)
         self.maxTileNum_DL.setObjectName("maxTileNum_DL")
         self.gridLayout.addWidget(self.maxTileNum_DL, 3, 1, 1, 1)
@@ -78,6 +79,7 @@ class Ui_gui_histo_main(object):
         self.project_name_DL.setObjectName("project_name_DL")
         self.gridLayout.addWidget(self.project_name_DL, 1, 1, 1, 1)
         self.batch_size_DL = QtWidgets.QSpinBox(self.Deeplearn)
+        self.batch_size_DL.setMaximum(99999)
         self.batch_size_DL.setProperty("value", 64)
         self.batch_size_DL.setObjectName("batch_size_DL")
         self.gridLayout.addWidget(self.batch_size_DL, 2, 1, 1, 1)
@@ -188,6 +190,7 @@ class Ui_gui_histo_main(object):
         self.run_Deploy.setObjectName("run_Deploy")
         self.gridLayout_2.addWidget(self.run_Deploy, 10, 1, 1, 1)
         self.maxtilenum_Deploy = QtWidgets.QSpinBox(self.Deploy)
+        self.maxtilenum_Deploy.setMaximum(99999)
         self.maxtilenum_Deploy.setProperty("value", 20)
         self.maxtilenum_Deploy.setObjectName("maxtilenum_Deploy")
         self.gridLayout_2.addWidget(self.maxtilenum_Deploy, 3, 1, 1, 1)
@@ -202,6 +205,7 @@ class Ui_gui_histo_main(object):
         self.targetlabels_Deploy.setObjectName("targetlabels_Deploy")
         self.gridLayout_2.addWidget(self.targetlabels_Deploy, 2, 3, 8, 1)
         self.batchsize_Deploy = QtWidgets.QSpinBox(self.Deploy)
+        self.batchsize_Deploy.setMaximum(99999)
         self.batchsize_Deploy.setProperty("value", 64)
         self.batchsize_Deploy.setObjectName("batchsize_Deploy")
         self.gridLayout_2.addWidget(self.batchsize_Deploy, 2, 1, 1, 1)
@@ -355,7 +359,7 @@ class Ui_gui_histo_main(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(gui_histo_main)
-        self.Tabs.setCurrentIndex(1)
+        self.Tabs.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(gui_histo_main)
 
     def retranslateUi(self, gui_histo_main):
