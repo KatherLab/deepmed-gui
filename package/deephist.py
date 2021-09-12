@@ -6,6 +6,9 @@ import os
 import pandas as pd
 import numpy as np
 
+#from deepest_histology.experiment_imports import *
+
+
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -116,28 +119,26 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def runDL_click(self):
 
-        t1 = "Projectname: " + self.ui.project_name_DL.text()
-        t2 = "SMT path: " + os.path.basename(self.slidmasttab_path_DL)
-        t3 = "PMT path: " + os.path.basename(self.patmasttab_path_DL)
-        t4 = "folderpath: " + self.folderpath_path_DL
-        t5 = "chosen target(s): " + str([str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()])
-        t6 = "max epochs: " + str(self.ui.max_epochs_DL.text())
-        t7 = "batch size: " + str(self.ui.batch_size_DL.text())
-        t8 = "max tile num: " + str(self.ui.maxTileNum_DL.text())
-        t9 = "GPU Num: " +str(self.ui.GPU_num_DL.text())
-        t10 = "mode: " +str(self.ui.choosemode_DL.currentText())
-        t11 = "train/test ratio: " +str(self.ui.traintestratio_DL.value())
-        t12 = "k-folds: " +str(self.ui.kfolds_DL.text())
-        t13 = "tile path: " + self.tilepath_DL
-        t14= "Cohort list"+ str(self.cohortlist_DL)
-        text1 = t1 + "\n\n" + t2 + "\n\n" + t3 + "\n\n" + t4 + "\n\n" + t5 + "\n\n" + t6 + "\n\n" + t7 + "\n\n" + t8
-        text2 = t9 + "\n\n" + t10 + "\n\n" + t11 + "\n\n" + t12 + "\n\n" + t13 + "\n\n" +t14
+        text = ["Projectname: " + self.ui.project_name_DL.text(),
+                "SMT path: " + os.path.basename(self.slidmasttab_path_DL),
+                "PMT path: " + os.path.basename(self.patmasttab_path_DL),
+                "Folder path: " + self.folderpath_path_DL,
+                "Chosen target(s): " + str([str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()]),
+                "Max epochs: " + str(self.ui.max_epochs_DL.text()),
+                "Batch size: " + str(self.ui.batch_size_DL.text()),
+                "Max tile num: " + str(self.ui.maxTileNum_DL.text()),
+                "GPU Num: " +str(self.ui.GPU_num_DL.text()),
+                "Mode: " +str(self.ui.choosemode_DL.currentText()),
+                "Train/test ratio: " +str(self.ui.traintestratio_DL.value()),
+                "K-folds: " +str(self.ui.kfolds_DL.text()),
+                "Tile path: " + self.tilepath_DL,
+                "Cohort list"+ str(self.cohortlist_DL),
+                "ADVANCED SETTINGS:",
+                "GPU num: " + str(self.advanced_values[0]),
+                "Binarize quantil: " + str(self.advanced_values[1]),
+                ]
 
-        t31 = "gpu num: " + str(self.advanced_values[0])
-        t32 = "binarize quantil: " + str(self.advanced_values[1])
-
-        text3 = "advanced settings: " + "\n\n" + t31 + "\n\n" + t32 + "\n\n"
-        print(text1+text2+text3)
+        print(*text, sep='\n')
 
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Are you sure you want to run the training?")
@@ -181,10 +182,12 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def add_list_clicked_DL(self):
 
-        t4 = "SMT path: " + os.path.basename(self.slidmasttab_path_DL)
-        t5 = "PMT path: " + os.path.basename(self.patmasttab_path_DL)
-        t6 = "tile path: " + self.tilepath_DL
-        text="Do you wont to save this setting?"+"\n\n"+"\n\n"+t4+"\n\n"+t5+"\n\n"+t6
+        t1 = "SMT path: " + os.path.basename(self.slidmasttab_path_DL)
+        t2 = "PMT path: " + os.path.basename(self.patmasttab_path_DL)
+        t3 = "tile path: " + self.tilepath_DL
+        text="Do you wont to save this setting?"+"\n\n"+"\n\n"+t1+"\n\n"+t2+"\n\n"+t3
+
+
         msgBox=QtWidgets.QMessageBox()
         msgBox.setText(text)
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
@@ -238,20 +241,19 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def run_Deploy_click(self):
         print("run")
-        t1 = "Project dir: " + str(self.project_dir_open)
-        t2 = "batch size: " + str(self.ui.batchsize_Deploy.text())
-        t3 = "max tile num: " + str(self.ui.maxtilenum_Deploy.text())
-        t4 = "SMT path: " + os.path.basename(self.slidmasttab_path_deploy)
-        t5 = "PMT path: " + os.path.basename(self.patmasttab_path_deploy)
-        t6 = "tile directory: " + str(self.choose_tiledir_deploy)
-        t7 = "model path: " + str(self.model_path_deploy)
-        t8 = "target evaluator" + str("yes")
-        t9 = "chosen groups: " + str([str(x.text()) for x in self.ui.targetlabels_Deploy.selectedItems()])
-        t10 = "chosen subgroups: " + str([str(x.text()) for x in self.ui.targetlabels2_Deploy.selectedItems()])
-        t11 = "cohortlists:" + str(self.cohortlist_deploy)
-        text1 = t1 + "\n\n" + t2 + "\n\n" + t3 + "\n\n" + t4 + "\n\n" + t5 + "\n\n" + t6 + "\n\n" + t7 + "\n\n"
-        text2 = t8+ "\n\n" + t9 + "\n\n" +t10 + "\n\n" + t11
-        print(text1+text2)
+        text = ["Project dir: " + str(self.project_dir_open),
+                "batch size: " + str(self.ui.batchsize_Deploy.text()),
+                "max tile num: " + str(self.ui.maxtilenum_Deploy.text()),
+                "SMT path: " + os.path.basename(self.slidmasttab_path_deploy),
+                "PMT path: " + os.path.basename(self.patmasttab_path_deploy),
+                "tile directory: " + str(self.choose_tiledir_deploy),
+                "model path: " + str(self.model_path_deploy),
+                "target evaluator" + str("yes"),
+                "chosen groups: " + str([str(x.text()) for x in self.ui.targetlabels_Deploy.selectedItems()]),
+                "chosen subgroups: " + str([str(x.text()) for x in self.ui.targetlabels2_Deploy.selectedItems()]),
+                "cohortlists:" + str(self.cohortlist_deploy),
+                ]
+        print(*text, sep='\n')
 
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Are you sure you want to run the deploy?")
@@ -260,7 +262,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
             try:
-                #  try run function
+                #  try run deploy function
                 #print(1 / 0)  # to simulate error
                 print("try to  run")
             except:
@@ -279,19 +281,20 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.project_dir_open = ""
         self.ui.targetlabels_Deploy.clear()
         self.ui.targetlabels2_Deploy.clear()
-        self.ui.batchsize_Deploy.setProperty("value",64)
+        self.ui.batchsize_Deploy.setProperty("value",64) #hardcoded
         self.cohortlist_deploy = []
 
         print("reset")
     def advanced_Deploy_click(self):
         print("advanced settings")
+        #still empty
 
     def add_list_clicked_Deploy(self):
 
-        t4 = "SMT path: " + os.path.basename(self.slidmasttab_path_deploy)
-        t5 = "PMT path: " + os.path.basename(self.patmasttab_path_deploy)
-        t6 = "tile directory: " + str(self.choose_tiledir_deploy)
-        text="Do you wont to save this setting?"+"\n\n"+"\n\n"+t4+"\n\n"+t5+"\n\n"+t6
+        t1 = "SMT path: " + os.path.basename(self.slidmasttab_path_deploy)
+        t2 = "PMT path: " + os.path.basename(self.patmasttab_path_deploy)
+        t3 = "tile directory: " + str(self.choose_tiledir_deploy)
+        text="Do you wont to save this setting?"+"\n\n"+"\n\n"+t1+"\n\n"+t2+"\n\n"+t3
         msgBox=QtWidgets.QMessageBox()
         msgBox.setText(text)
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
@@ -310,7 +313,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def count_down(self):
         n=self.ui.imgcounter_Vis.intValue()
-        self.ui.imgcounter_Vis.display(n-1)
+        if n>0:
+            self.ui.imgcounter_Vis.display(n-1)
 
 
 class MyDialog(QtWidgets.QDialog):
