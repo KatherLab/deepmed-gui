@@ -1,10 +1,10 @@
 import sys
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtWidgets
 from package.mainwindow import Ui_gui_histo_main
 from package.advanced_settings import Ui_advanced_settings
 import os
 import pandas as pd
-import numpy as np
+from deepmed.experiment_imports import *
 
 #from deepest_histology.experiment_imports import *
 
@@ -147,9 +147,39 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
             try:
-                #  try run function
-                #print(1 / 0)  # to simulate error
-                print("try to  run")
+                if self.ui.choosemode_DL.currentText() == 'test/train':
+                    do_experiment(
+                        project_dir=self.ui.project_name_DL.text(),
+                        get=get.MultiTarget(
+                            get.SimpleRun(),
+                            train_cohorts_df=pd.concat(
+                                cohort(tiles_path, clini_path, slide_path)
+                                for tiles_path, clini_path, slide_path in self.cohortlist_DL
+                            ),
+                            target_labels=[str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()],
+                            resample_each_epoch=True,
+                            valid_frac=self.ui.traintestratio_DL.value()/100,
+                        )
+                    )
+                elif self.ui.choosemode_DL.currentText() == 'k-fold cross validation':
+                    do_experiment(
+                        project_dir=self.ui.project_name_DL.text(),
+                        get=get.MultiTarget(
+                            get.Crossval(),
+                            get.SimpleRun(),
+                            cohorts_df=pd.concat(
+                                cohort(tiles_path, clini_path, slide_path)
+                                for tiles_path, clini_path, slide_path in self.cohortlist_DL
+                            ),
+                            folds=int(self.ui.kfolds_DL.text()),
+                            target_labels=[str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()],
+                            resample_each_epoch=True,
+                            valid_frac=self.ui.traintestratio_DL.value()/100,
+                        )
+                    )
+                else:
+                    raise ValueError(self.ui.choosemode_DL.currentText())
+
             except:
                 # if not working raise dialog
                 QtWidgets.QMessageBox.critical(self, "Error","Oh no!  \n Something went wrong ")
@@ -262,9 +292,23 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
             try:
-                #  try run deploy function
-                #print(1 / 0)  # to simulate error
-                print("try to  run")
+                do_experiment(
+                    project_dir=self.project_dir_open,
+                    get=get.MultiTarget(
+                        get.SimpleRun(),
+                        test_cohorts_df=pd.concat(
+                            cohort(tiles_path, clini_path, slide_path)
+                            for slide_path, clini_path, tiles_path in self.cohortlist_deploy
+                        ),
+                        target_labels=[str(x.text()) for x in self.ui.targetlabels_Deploy.selectedItems()],
+                        train=Load(
+                            project_dir=self.project_dir_open,
+                            training_project_dir=self.model_path_deploy),
+                        evaluators=[Grouped(auroc), Grouped(p_value)],
+                        crossval_evaluators=[AggregateStats(label='fold')],
+                        multi_target_evaluators=[AggregateStats(label='target', over=['fold'])]
+                    )
+                )
             except:
                 # if not working raise dialog
                 QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")
