@@ -2,3 +2,4 @@ PyQt5
 pandas
 numpy
 matplotlib
+#git+git://github.com:KatherLab/deepmed.git@8d4629de9e4f215432ccc36329cdaffb43d70f5f
