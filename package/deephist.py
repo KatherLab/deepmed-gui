@@ -1,11 +1,11 @@
 import sys
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets,QtCore
 from package.mainwindow import Ui_gui_histo_main
 from package.advanced_settings import Ui_advanced_settings
 import os
 import pandas as pd
-from deepmed.evaluators.aggregate_stats import AggregateStats
-from deepmed.experiment_imports import *
+#from deepmed.evaluators.aggregate_stats import AggregateStats
+#from deepmed.experiment_imports import *
 
 
 
@@ -19,12 +19,25 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         # Events Deeplearn
+        self.projectname_DL = self.ui.project_name_DL.text()
         self.slidmasttab_path_DL = " "  # empty values
         self.patmasttab_path_DL = " "  # empty values
         self.folderpath_path_DL = " "  # empty values
         self.tilepath_DL = " "  # empty values
         self.advanced_values = [0, 0]  # basic values from advanced settings Default NEEDS TO BE SET
-        self.cohortlist_DL=[]
+
+        self.batch_size_DL = self.ui.batch_size_DL.text()
+        self.max_tile_num_DL = self.ui.maxTileNum_DL.text()
+        self.max_epochs_DL = self.ui.max_epochs_DL.text()
+        self.gpu_num_DL = self.ui.GPU_num_DL.text()
+        self.mode_DL = "test/train chosen"
+        self.traintestratio_DL = self.ui.traintestratio_DL.value()
+        self.kfolds_DL = self.ui.kfolds_DL.text()
+        self.cohortlist_DL = []
+        self.targets_DL = self.ui.choosetarg_DL.selectedItems()
+
+
+
 
         self.ui.slide_masttab_DL.clicked.connect(self.open_slidmasttab)
         self.ui.clini_table_DL.clicked.connect(self.open_patmasttab)
@@ -36,8 +49,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.choosemode_DL.currentIndexChanged.connect(self.mode_chosen)
         self.ui.addcohortlist_DL.clicked.connect(self.add_list_clicked_DL)
         self.ui.del_list_DL.clicked.connect(self.delete_list_clicked_DL)
-        self.ui.cohort_list_DL.itemDoubleClicked.connect(self.changename_DL)
-        self.clicked_cohort_DL=self.ui.cohort_list_DL.currentRow()
+        self.ui.cohort_list_DL.itemClicked.connect(self.changename_DL)
+        self.clicked_cohort_DL = self.ui.cohort_list_DL
         self.ui.test_dl.clicked.connect(self.testclick_DL)
 
         ###########
@@ -76,11 +89,12 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.traintestratio_DL.setEnabled(False)
         self.ui.label_5.setEnabled(False)
         self.ui.label_4.setEnabled(False)
-        if self.ui.choosemode_DL.currentIndex()==0:
+        self.mode_DL = self.ui.choosemode_DL.currentIndex()
+        if self.mode_DL==0:
             print("test/train chosen")
             self.ui.traintestratio_DL.setEnabled(True)
             self.ui.label_4.setEnabled(True)
-        elif self.ui.choosemode_DL.currentIndex()==1:
+        elif self.mode_DL==1:
             print("k-fold crossvalidation chosen")
             self.ui.kfolds_DL.setEnabled(True)
             self.ui.label_5.setEnabled(True)
@@ -94,7 +108,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             print(path)
 
     def open_patmasttab(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData")
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData","*.xlsx")
 
         if path != ('', ''):
             self.patmasttab_path_DL = path[0]
@@ -121,18 +135,18 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def runDL_click(self):
 
-        text = ["Projectname: " + self.ui.project_name_DL.text(),
+        text = ["Projectname: " + self.projectname_DL,
                 "SMT path: " + os.path.basename(self.slidmasttab_path_DL),
                 "PMT path: " + os.path.basename(self.patmasttab_path_DL),
                 "Folder path: " + self.folderpath_path_DL,
-                "Chosen target(s): " + str([str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()]),
-                "Max epochs: " + str(self.ui.max_epochs_DL.text()),
-                "Batch size: " + str(self.ui.batch_size_DL.text()),
-                "Max tile num: " + str(self.ui.maxTileNum_DL.text()),
-                "GPU Num: " +str(self.ui.GPU_num_DL.text()),
-                "Mode: " +str(self.ui.choosemode_DL.currentText()),
-                "Train/test ratio: " +str(self.ui.traintestratio_DL.value()),
-                "K-folds: " +str(self.ui.kfolds_DL.text()),
+                "Chosen target(s): " + str([str(x.text()) for x in self.targets_DL]),
+                "Max epochs: " + str(self.max_epochs_DL),
+                "Batch size: " + str(self.batch_size_DL),
+                "Max tile num: " + str(self.max_tile_num_DL),
+                "GPU Num: " +str(self.gpu_num_DL),
+                "Mode: " +str(self.mode_DL),
+                "Train/test ratio: " +str(self.traintestratio_DL),
+                "K-folds: " +str(self.kfolds_DL),
                 "Tile path: " + self.tilepath_DL,
                 "Cohort list"+ str(self.cohortlist_DL),
                 "ADVANCED SETTINGS:",
@@ -148,39 +162,39 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         returnValue = msgBox.exec()
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
-            if self.ui.choosemode_DL.currentText() == 'test/train':
+            if self.mode_DL == 'test/train':
                     do_experiment(
-                        project_dir=self.ui.project_name_DL.text(),
+                        project_dir=self.projectname_DL,
                         get=get.MultiTarget(
                             get.SimpleRun(),
                             train_cohorts_df=pd.concat([
                                 cohort(tiles_path, clini_path, slide_path)
                                 for tiles_path, clini_path, slide_path in self.cohortlist_DL]
                             ),
-                            target_labels=[str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()],
+                            target_labels=[str(x.text()) for x in self.targets_DL],
                             resample_each_epoch=True,
-                            valid_frac=self.ui.traintestratio_DL.value()/100
+                            valid_frac=self.traintestratio_DL/100
                         )
                     )
                     
             try:
-                if self.ui.choosemode_DL.currentText() == 'test/train':
+                if self.mode_DL == 'test/train':
                     do_experiment(
-                        project_dir=self.ui.project_name_DL.text(),
+                        project_dir=self.projectname_DL,
                         get=get.MultiTarget(
                             get.SimpleRun(),
                             train_cohorts_df=pd.concat([
                                 cohort(tiles_path, clini_path, slide_path)
                                 for tiles_path, clini_path, slide_path in self.cohortlist_DL]
                             ),
-                            target_labels=[str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()],
+                            target_labels=[str(x.text()) for x in self.targets_DL],
                             resample_each_epoch=True,
-                            valid_frac=self.ui.traintestratio_DL.value()/100
+                            valid_frac=self.traintestratio_DL / 100
                         )
                     )
-                elif self.ui.choosemode_DL.currentText() == 'k-fold cross validation':
+                elif self.mode_DL == 'k-fold cross validation':
                     do_experiment(
-                        project_dir=self.ui.project_name_DL.text(),
+                        project_dir=self.projectname_DL,
                         get=get.MultiTarget(
                             get.Crossval(),
                             get.SimpleRun(),
@@ -188,14 +202,14 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                                 cohort(tiles_path, clini_path, slide_path)
                                 for tiles_path, clini_path, slide_path in self.cohortlist_DL
                             ),
-                            folds=int(self.ui.kfolds_DL.text()),
-                            target_labels=[str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()],
+                            folds=int(self.kfolds_DL),
+                            target_labels=[str(x.text()) for x in self.targets_DL],
                             resample_each_epoch=True,
-                            valid_frac=self.ui.traintestratio_DL.value()/100,
+                            valid_frac=self.traintestratio_DL/100,
                         )
                     )
                 else:
-                    raise ValueError(self.ui.choosemode_DL.currentText())
+                    raise ValueError(self.mode_DL)
 
             except:
                 # if not working raise dialog
@@ -206,18 +220,31 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def resetDL_click(self):
         self.ui.project_name_DL.clear()
+        self.projectname_DL = self.ui.project_name_DL.text()
         self.slidmasttab_path_DL = " "
         self.patmasttab_path_DL = " "
         self.folderpath_path_DL = " "
         self.ui.choosetarg_DL.clear()
+        self.targets_DL = self.ui.choosetarg_DL.selectedItems()
         self.ui.kfolds_DL.setEnabled(False)
+        self.kfolds_DL = self.ui.kfolds_DL.text()
         self.ui.traintestratio_DL.setEnabled(True)
+        self.traintestratio_DL = self.ui.traintestratio_DL.value()
         self.ui.label_5.setEnabled(False)
         self.ui.label_4.setEnabled(True)
         self.ui.max_epochs_DL.setProperty("value", 4)  # hardcoded
+        self.max_epochs_DL = self.ui.max_epochs_DL.text()
         self.ui.batch_size_DL.setProperty("value", 0)  # hardcoded
+        self.batch_size_DL = self.ui.batch_size_DL.text()
         self.ui.maxTileNum_DL.setProperty("value", 0)  # hardcoded
+        self.max_tile_num_DL = self.ui.maxTileNum_DL.text()
+        self.ui.cohort_list_DL.clear()
         self.cohortlist = []
+        self.ui.GPU_num_DL.setProperty("value", 3)  # hardcoded
+        self.gpu_num_DL = self.ui.GPU_num_DL.text()
+        self.advanced_values = [0, 0]  # basic values from advanced settings Default NEEDS TO BE SET
+
+
 
     def open_DL_dialog(self):
         """open advanced settings for Deep Learn"""
@@ -242,7 +269,16 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
             n_items=self.ui.cohort_list_DL.count()+1
-            self.ui.cohort_list_DL.addItem(f"Cohort {n_items}")
+            item = QtWidgets.QListWidgetItem(f"Cohort {n_items}")
+
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsEnabled)
+
+            self.ui.cohort_list_DL.addItem(item)
+
+
+
+            #self.ui.cohort_list_DL.addItem(f"Cohort {n_items}")
+
             self.cohortlist_DL.append([self.tilepath_DL,self.patmasttab_path_DL,self.slidmasttab_path_DL])
     def delete_list_clicked_DL(self):
         self.ui.cohort_list_DL.clear()
