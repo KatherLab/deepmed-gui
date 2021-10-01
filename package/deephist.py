@@ -4,14 +4,11 @@ from package.mainwindow import Ui_gui_histo_main
 from package.advanced_settings import Ui_advanced_settings
 import os
 import pandas as pd
-from deepmed.experiment_imports import *
-
-#from deepest_histology.experiment_imports import *
+#from deepmed.experiment_imports import *
 
 
-import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+
 
 
 class Mainwindow_con(QtWidgets.QMainWindow):
@@ -38,6 +35,10 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.choosemode_DL.currentIndexChanged.connect(self.mode_chosen)
         self.ui.addcohortlist_DL.clicked.connect(self.add_list_clicked_DL)
         self.ui.del_list_DL.clicked.connect(self.delete_list_clicked_DL)
+        self.ui.cohort_list_DL.itemDoubleClicked.connect(self.changename_DL)
+        self.clicked_cohort_DL=self.ui.cohort_list_DL.currentRow()
+        self.ui.test_dl.clicked.connect(self.testclick_DL)
+
         ###########
 
 
@@ -229,6 +230,67 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.cohortlist_DL.append([os.path.basename(self.slidmasttab_path_DL),os.path.basename(self.patmasttab_path_DL),self.tilepath_DL])
     def delete_list_clicked_DL(self):
         self.ui.cohort_list_DL.clear()
+
+    def changename_DL(self):
+        i=0
+        t1,t2,t3 = self.cohortlist_DL[i]
+        t1 = "SMT path: " + str(t1)
+        t2 = "PMT path: " + str(t2)
+        t3 = "tile path: " + str(t3)
+        text = "Cohort:" + "cohortname" + "\n\n" + "\n\n" + t1 + "\n\n" + t2 + "\n\n" + t3
+        print(str(self.clicked_cohort_DL))
+
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setText(text)
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        msgBox.addButton("delete cohort",QtWidgets.QMessageBox.ActionRole)
+        returnValue = msgBox.exec()
+
+    def testclick_DL(self):
+        do_experiment(
+
+            project_dir='I:/results_BRCA_A2_CV3_multimulti',  # define the output directory
+
+            get=partial(
+                get.multi_target,
+                get.crossval,
+                get.simple_run,
+                # define where the tiles and tables are located
+                cohorts_df=cohort(
+                    tiles_path='I:/TCGA-BRCA-BENCHMARK-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
+                    clini_path='I:/TCGA-BRCA-A2_CLINI.xlsx',
+                    slide_path='I:/TCGA-BRCA-A2_SLIDE.xlsx'),
+                # now choose a binary categorical, a multiclass categorical and a continuous target
+                # the continuous target will be binarized at the median
+                target_labels=['ER Status By IHC', 'Cancer Type Detailed', 'Neoplasm Histologic Type Name', \
+                               'Fraction Genome Altered'],
+                max_train_tile_num=500,  # how many tiles from each whole slide image? (maximum)
+                min_support=8,  # how many patients are required in each category?
+                valid_frac=.2,  # which fraction of patients is used for validation (early stopping)+
+                # now define all the values which will be excluded (set to missing)
+                na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', 'Other, specify'],
+                multi_target_evaluators=[partial(aggregate_stats, group_levels=[-3, -1])],  # group_levels=[-3, -1]
+                crossval_evaluators=[aggregate_stats, Grouped(roc), top_tiles],
+                # partial(aggregate_stats, group_levels=[-1,-3])
+
+                # define all the output statistics, can be on the level of tiles, slides or patients
+                # crossval_evaluators=[aggregate_stats, Grouped(roc), top_tiles],
+                evaluators=[Grouped(auroc), Grouped(count), top_tiles, Grouped(p_value)],
+                train=partial(
+                    train,
+                    batch_size=128,  # mini batch size, can be larger if GPU RAM is larger
+                    max_epochs=20,  # maximum number of epochs if no early stopping
+                    tfms=aug_transforms(size=224),  # additional transforms defined in fastai
+                )
+            ),
+
+            # num_concurrent_tasks=0,
+
+            # devices = {'cuda:0': 4}, # which cuda device to use and how many threads per device
+        )
+
+
+
     ### DEPLOY
     def open_project_dir_Deploy(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, "\home")
@@ -395,6 +457,10 @@ widget.show()
 
 
 """
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
 def testbutton_click(self):
     
     codename = self.ui.projectname.text() + "-generated"
