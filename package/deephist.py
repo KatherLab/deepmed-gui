@@ -4,7 +4,8 @@ from package.mainwindow import Ui_gui_histo_main
 from package.advanced_settings import Ui_advanced_settings
 import os
 import pandas as pd
-#from deepmed.experiment_imports import *
+from deepmed.evaluators.aggregate_stats import AggregateStats
+from deepmed.experiment_imports import *
 
 
 
@@ -87,13 +88,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         else:
             print("unknown mode chosen")
     def open_slidmasttab(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData", "*.csv")
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData")
         if path != ('', ''):
             self.slidmasttab_path_DL = path[0]
             print(path)
 
     def open_patmasttab(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData", "*.xlsx")
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData")
 
         if path != ('', ''):
             self.patmasttab_path_DL = path[0]
@@ -147,19 +148,34 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         returnValue = msgBox.exec()
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
+            if self.ui.choosemode_DL.currentText() == 'test/train':
+                    do_experiment(
+                        project_dir=self.ui.project_name_DL.text(),
+                        get=get.MultiTarget(
+                            get.SimpleRun(),
+                            train_cohorts_df=pd.concat([
+                                cohort(tiles_path, clini_path, slide_path)
+                                for tiles_path, clini_path, slide_path in self.cohortlist_DL]
+                            ),
+                            target_labels=[str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()],
+                            resample_each_epoch=True,
+                            valid_frac=self.ui.traintestratio_DL.value()/100
+                        )
+                    )
+                    
             try:
                 if self.ui.choosemode_DL.currentText() == 'test/train':
                     do_experiment(
                         project_dir=self.ui.project_name_DL.text(),
                         get=get.MultiTarget(
                             get.SimpleRun(),
-                            train_cohorts_df=pd.concat(
+                            train_cohorts_df=pd.concat([
                                 cohort(tiles_path, clini_path, slide_path)
-                                for tiles_path, clini_path, slide_path in self.cohortlist_DL
+                                for tiles_path, clini_path, slide_path in self.cohortlist_DL]
                             ),
                             target_labels=[str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()],
                             resample_each_epoch=True,
-                            valid_frac=self.ui.traintestratio_DL.value()/100,
+                            valid_frac=self.ui.traintestratio_DL.value()/100
                         )
                     )
                 elif self.ui.choosemode_DL.currentText() == 'k-fold cross validation':
@@ -227,7 +243,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             print('OK clicked')
             n_items=self.ui.cohort_list_DL.count()+1
             self.ui.cohort_list_DL.addItem(f"Cohort {n_items}")
-            self.cohortlist_DL.append([os.path.basename(self.slidmasttab_path_DL),os.path.basename(self.patmasttab_path_DL),self.tilepath_DL])
+            self.cohortlist_DL.append([self.tilepath_DL,self.patmasttab_path_DL,self.slidmasttab_path_DL])
     def delete_list_clicked_DL(self):
         self.ui.cohort_list_DL.clear()
 
@@ -247,47 +263,74 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         returnValue = msgBox.exec()
 
     def testclick_DL(self):
-        do_experiment(
+    
+        if True:
+            project_dir='C:/Users/tseibel/Desktop/test/savepath',  # define the output directory
+            tiles_path='C:/Users/tseibel/Desktop/test/BLOCKS_NORM_MACENKO'
+            clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_CLINI.xlsx'
+            slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_SLIDE.xlsx'
+            target_label=['ER Status By IHC']
+            if self.ui.choosemode_DL.currentText() == 'test/train':
+                    do_experiment(
+                        project_dir=self.ui.project_name_DL.text(),
+                        get=get.MultiTarget(
+                            get.SimpleRun(),
+                            train_cohorts_df=pd.concat([
+                                cohort(tile_path, clin_path, slid_path)
+                                for tile_path, clin_path, slid_path in [[tiles_path,clini_path,slide_path]] ]
+                            ),
+                            target_labels= target_label,  #[str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()],
+                            resample_each_epoch=True,
+                            valid_frac=self.ui.traintestratio_DL.value()/100
+                        )
+                    )
+        
+        if False:
+            do_experiment(
 
-            project_dir='I:/results_BRCA_A2_CV3_multimulti',  # define the output directory
+                
 
-            get=partial(
-                get.multi_target,
-                get.crossval,
-                get.simple_run,
-                # define where the tiles and tables are located
-                cohorts_df=cohort(
-                    tiles_path='I:/TCGA-BRCA-BENCHMARK-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
-                    clini_path='I:/TCGA-BRCA-A2_CLINI.xlsx',
-                    slide_path='I:/TCGA-BRCA-A2_SLIDE.xlsx'),
-                # now choose a binary categorical, a multiclass categorical and a continuous target
-                # the continuous target will be binarized at the median
-                target_labels=['ER Status By IHC', 'Cancer Type Detailed', 'Neoplasm Histologic Type Name', \
-                               'Fraction Genome Altered'],
-                max_train_tile_num=500,  # how many tiles from each whole slide image? (maximum)
-                min_support=8,  # how many patients are required in each category?
-                valid_frac=.2,  # which fraction of patients is used for validation (early stopping)+
-                # now define all the values which will be excluded (set to missing)
-                na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', 'Other, specify'],
-                multi_target_evaluators=[partial(aggregate_stats, group_levels=[-3, -1])],  # group_levels=[-3, -1]
-                crossval_evaluators=[aggregate_stats, Grouped(roc), top_tiles],
-                # partial(aggregate_stats, group_levels=[-1,-3])
+        
+                                
+                                
+                get=partial(
+                    get.MultiTarget,
+                    get.Crossval,
+                    get.SimpleRun,
+                    # define where the tiles and tables are located
+                    
+                    cohorts_df=cohort(
+                        tiles_path='C:/Users/tseibel/Desktop/test/BLOCKS_NORM_MACENKO',
+                        clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_CLINI.xlsx',
+                        slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_SLIDE.xlsx'),
+                    # now choose a binary categorical, a multiclass categorical and a continuous target
+                    # the continuous target will be binarized at the median
+                    target_labels=['ER Status By IHC', 'Cancer Type Detailed', 'Neoplasm Histologic Type Name', \
+                                   'Fraction Genome Altered'],
+                    max_train_tile_num=500,  # how many tiles from each whole slide image? (maximum)
+                    min_support=8,  # how many patients are required in each category?
+                    valid_frac=.2,  # which fraction of patients is used for validation (early stopping)+
+                    # now define all the values which will be excluded (set to missing)
+                    na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', 'Other, specify'],
+                    multi_target_evaluators=[partial(AggregateStats, group_levels=[-3, -1])],  # group_levels=[-3, -1]
+                    crossval_evaluators=[AggregateStats, Grouped(Roc), TopTiles],
+                    # partial(AggregateStats, group_levels=[-1,-3])
 
-                # define all the output statistics, can be on the level of tiles, slides or patients
-                # crossval_evaluators=[aggregate_stats, Grouped(roc), top_tiles],
-                evaluators=[Grouped(auroc), Grouped(count), top_tiles, Grouped(p_value)],
-                train=partial(
-                    train,
-                    batch_size=128,  # mini batch size, can be larger if GPU RAM is larger
-                    max_epochs=20,  # maximum number of epochs if no early stopping
-                    tfms=aug_transforms(size=224),  # additional transforms defined in fastai
-                )
-            ),
+                    # define all the output statistics, can be on the level of tiles, slides or patients
+                    # crossval_evaluators=[AggregateStats, Grouped(Roc), TopTiles],
+                    evaluators=[Grouped(auroc), Grouped(count), TopTiles, Grouped(p_value)],
+                    Train=partial(
+                        Train,
+                        batch_size=128,  # mini batch size, can be larger if GPU RAM is larger
+                        max_epochs=20,  # maximum number of epochs if no early stopping
+                        tfms=aug_transforms(size=224),  # additional transforms defined in fastai
+                    )
+                ),
 
-            # num_concurrent_tasks=0,
+                # num_concurrent_tasks=0,
 
-            # devices = {'cuda:0': 4}, # which cuda device to use and how many threads per device
-        )
+                # devices = {'cuda:0': 4}, # which cuda device to use and how many threads per device
+            )
 
 
 
