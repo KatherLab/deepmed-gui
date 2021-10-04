@@ -187,8 +187,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                             
                             train=Train(
                                 
-                                batch_size= self.batch_size_DL,
-                                max_epochs=self.max_epochs_DL,
+                                batch_size= int(self.batch_size_DL),
+                                max_epochs=int(self.max_epochs_DL),
                                 
                                 )
                         ) 
