@@ -2,7 +2,7 @@ PyQt5
 pandas
 numpy
 matplotlib
-git+https://github.com/KatherLab/deepmed.git@0.8.0rc#egg=deepmed-katherlab
+git+https://github.com/KatherLab/deepmed.git@0.8#egg=deepmed-katherlab
 torch==1.9.1+cu102  -f https://download.pytorch.org/whl/torch_stable.html
 torchvision==0.10.1+cu102  -f https://download.pytorch.org/whl/torch_stable.html
 torchaudio===0.9.1 -f https://download.pytorch.org/whl/torch_stable.html
