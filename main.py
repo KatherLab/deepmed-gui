@@ -1,8 +1,12 @@
+from PyQt5 import QtWidgets
+from package.deephist import Mainwindow_con
+import sys
+
 
 if __name__ == "__main__":
-
-    import sys
-    from package import deephist
-    sys.exit(deephist.app.exec_())
+    app = QtWidgets.QApplication(sys.argv)
+    widget = Mainwindow_con()
+    widget.show()
+    sys.exit(app.exec_())
 
 
