@@ -57,12 +57,20 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
 
         # Events Deploy
+        self.project_dir_open = ""  # empty values
+        self.batch_size_deploy = self.ui.batchsize_Deploy
+        self.max_tile_num_deploy = self.ui.maxtilenum_Deploy
+        self.model_path_deploy = ""
+        self.patmasttab_path_deploy = " "  
         self.slidmasttab_path_deploy = ""  # empty values
         self.choose_tiledir_deploy = ""  # empty values
-        self.model_path_deploy = ""  # empty values
-        self.project_dir_open = ""  # empty values
-        self.patmasttab_path_deploy = " "  # empty values
+
+
+
         self.cohortlist_deploy= []
+
+
+
 
         self.ui.projectdir_Deploy.clicked.connect(self.open_project_dir_Deploy)
         self.ui.choose_slidetable_Deploy.clicked.connect(self.open_slidmasttab_Deploy)
