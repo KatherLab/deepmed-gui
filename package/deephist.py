@@ -1,12 +1,16 @@
 import sys
 from PyQt5 import QtWidgets,QtCore
+from PyQt5.QtCore import  QThreadPool
+from PyQt5.QtCore import pyqtSlot
 from package.mainwindow import Ui_gui_histo_main
 from package.advanced_settings import Ui_advanced_settings
 import os
 import pandas as pd
 from deepmed.evaluators.aggregate_stats import AggregateStats
 from deepmed.experiment_imports import *
-
+import time
+import threading
+import multiprocessing
 
 
 class Mainwindow_con(QtWidgets.QMainWindow):
@@ -16,7 +20,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         # Events Deeplearn
-        self.projectname_DL = self.ui.project_name_DL.text()
+        
         self.slidmasttab_path_DL = " "  # empty values
         self.patmasttab_path_DL = " "  # empty values
         self.folderpath_DL = " "  # empty values
@@ -33,7 +37,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.cohortlist_DL = []
         self.targets_DL = self.ui.choosetarg_DL.selectedItems()
 
-
+        self.threadpool = QtCore.QThreadPool()
+        print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
 
         self.ui.slide_masttab_DL.clicked.connect(self.open_slidmasttab)
@@ -49,7 +54,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.cohort_list_DL.itemClicked.connect(self.changename_DL)
         self.clicked_cohort_DL = self.ui.cohort_list_DL
         self.ui.test_dl.clicked.connect(self.testclick_DL)
-
+        self.ui.stop_DL.clicked.connect(self.stopclick_DL)
         ###########
 
 
@@ -111,7 +116,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if path != ('', ''):
             self.slidmasttab_path_DL = path[0]
             print(path)
-
     def open_patmasttab(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData","*.xlsx")
 
@@ -124,23 +128,17 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.ui.choosetarg_DL.setEnabled(True)
             self.ui.choosetarg_DL.clear()
             self.ui.choosetarg_DL.addItems(list(df))
-
-
     def open_savingpath(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, "\home")
         if path != ('', ''):
             self.folderpath_DL = path
-
     def open_tile_path(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, "\home")
         if path != ('', ''):
             self.tilepath_DL = path
-
-
-
     def runDL_click(self):
 
-        text = ["Projectname: " + self.projectname_DL,
+        text = [
                 "SMT path: " + os.path.basename(self.slidmasttab_path_DL),
                 "PMT path: " + os.path.basename(self.patmasttab_path_DL),
                 "Folder path: " + self.folderpath_DL,
@@ -230,7 +228,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
             finally:
                 print("cont'd")
-
     def resetDL_click(self):
         self.ui.project_name_DL.clear()
         self.projectname_DL = self.ui.project_name_DL.text()
@@ -256,9 +253,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.GPU_num_DL.setProperty("value", 3)  # hardcoded
         self.gpu_num_DL = self.ui.GPU_num_DL.text()
         self.advanced_values = [0, 0]  # basic values from advanced settings Default NEEDS TO BE SET
-
-
-
     def open_DL_dialog(self):
         """open advanced settings for Deep Learn"""
         my_dialog = MyDialog()
@@ -266,7 +260,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if execval == True:
             self.advanced_values = my_dialog.save_advanced()  # values from dialog window
         print(self.advanced_values)
-
     def add_list_clicked_DL(self):
 
         t1 = "SMT path: " + os.path.basename(self.slidmasttab_path_DL)
@@ -295,7 +288,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.cohortlist_DL.append([self.tilepath_DL,self.patmasttab_path_DL,self.slidmasttab_path_DL])
     def delete_list_clicked_DL(self):
         self.ui.cohort_list_DL.clear()
-
     def changename_DL(self):
         i=0
         t1,t2,t3 = self.cohortlist_DL[i]
@@ -311,9 +303,29 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         msgBox.addButton("delete cohort",QtWidgets.QMessageBox.ActionRole)
         returnValue = msgBox.exec()
 
+
+    def execute_this_fn(self):
+       
+        for i in range(4):
+            time.sleep(1)    
+            print("start pipeline.")
+
     def testclick_DL(self):
-    
-        if True:
+
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setText("Do you want to start the pipeline?")
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        returnValue = msgBox.exec()
+        if returnValue == QtWidgets.QMessageBox.Ok:
+            self.ui.stop_DL.setEnabled(True)
+            print('OK clicked')
+            self.worker = Worker(self.execute_this_fn) # Any other args, kwargs are passed to the run function
+            # Execute
+            self.threadpool.start(self.worker)
+        
+        
+
+        if False:
             project_dir='C:/Users/tseibel/Desktop/test/savepath' 
             tiles_path='C:/Users/tseibel/Desktop/test/BLOCKS_NORM_MACENKO'
             clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_CLINI.xlsx'
@@ -350,6 +362,22 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     devices={'cuda:0': 4},
                     num_concurrent_tasks=0,
                 )
+
+
+    def stopclick_DL(self):   
+        
+
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setText("Do you want to stop the pipeline?\n Progress will be lost.")
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        returnValue = msgBox.exec()
+        if returnValue == QtWidgets.QMessageBox.Ok:
+            print('OK clicked')
+            #####
+            #kill worker, TO DO
+            #####
+            print("close pipeline")
+            
 
     ### DEPLOY
     def open_project_dir_Deploy(self):
@@ -505,6 +533,36 @@ class MyDialog(QtWidgets.QDialog):
     def reset_advanced(self):
         self.ui.GPUnum.setProperty("value", 4)
         self.ui.binarize_quantile.setProperty("value", 14)
+
+##
+
+class Worker(QtCore.QRunnable):
+    '''
+    Worker thread
+
+    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
+
+    :param callback: The function callback to run on this worker thread. Supplied args and
+                     kwargs will be passed through to the runner.
+    :type callback: function
+    :param args: Arguments to pass to the callback function
+    :param kwargs: Keywords to pass to the callback function
+
+    '''
+
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+
+    @pyqtSlot()
+    def run(self):
+        '''
+        Initialise the runner function with passed args, kwargs.
+        '''
+        self.fn(*self.args, **self.kwargs)
 
 
 #####
