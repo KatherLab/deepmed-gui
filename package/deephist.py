@@ -34,7 +34,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.mode_DL = "test/train"
         self.validratio_DL = self.ui.validratio_DL.value()
         self.kfolds_DL = self.ui.kfolds_DL.text()
-        self.cohortlist_DL = []
+        
         self.targets_DL = self.ui.choosetarg_DL.selectedItems()
 
         self.threadpool = QtCore.QThreadPool()
@@ -51,25 +51,22 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.choosemode_DL.currentIndexChanged.connect(self.mode_chosen)
         self.ui.addcohortlist_DL.clicked.connect(self.add_list_clicked_DL)
         self.ui.del_list_DL.clicked.connect(self.delete_list_clicked_DL)
-        self.ui.cohort_list_DL.itemClicked.connect(self.changename_DL)
-        self.clicked_cohort_DL = self.ui.cohort_list_DL
+        self.ui.cohortlist_DL.itemClicked.connect(self.changename_DL)
         self.ui.test_dl.clicked.connect(self.testclick_DL)
         self.ui.stop_DL.clicked.connect(self.stopclick_DL)
         ###########
 
 
         # Events Deploy
-        self.project_dir_open = ""  # empty values
+        self.project_dir_deploy = ""  # empty values
         self.batch_size_deploy = self.ui.batchsize_Deploy
         self.max_tile_num_deploy = self.ui.maxtilenum_Deploy
         self.model_path_deploy = ""
-        self.patmasttab_path_deploy = " "  
         self.slidmasttab_path_deploy = ""  # empty values
+        self.patmasttab_path_deploy = " "
         self.choose_tiledir_deploy = ""  # empty values
-
-
-
         self.cohortlist_deploy= []
+        self.cohort_name_list_deploy= []
 
 
 
@@ -82,9 +79,9 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.reset_Deploy.clicked.connect(self.reset_Deploy_click)
         self.ui.advanced_Deploy.clicked.connect(self.advanced_Deploy_click)
         self.ui.clini_table_Deploy.clicked.connect(self.open_patmasttab_deploy)
-
         self.ui.addlist_Deploy.clicked.connect(self.add_list_clicked_Deploy)
         self.ui.del_list_deploy.clicked.connect(self.delete_list_clicked_Deploy)
+        self.ui.cohortlist_Deploy.itemClicked.connect(self.changename_Deploy)
         ###########
         # Events Visualize
         self.ui.nextIm_Vis.clicked.connect(self.count_up)
@@ -111,11 +108,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
         else:
             print("unknown mode chosen")
+
     def open_slidmasttab(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData")
         if path != ('', ''):
             self.slidmasttab_path_DL = path[0]
             print(path)
+
     def open_patmasttab(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData","*.xlsx")
 
@@ -128,48 +127,20 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.ui.choosetarg_DL.setEnabled(True)
             self.ui.choosetarg_DL.clear()
             self.ui.choosetarg_DL.addItems(list(df))
+
     def open_savingpath(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, "\home")
         if path != ('', ''):
             self.folderpath_DL = path
+
     def open_tile_path(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, "\home")
         if path != ('', ''):
             self.tilepath_DL = path
+
     def runDL_click(self):
-
-        text = [
-                "SMT path: " + os.path.basename(self.slidmasttab_path_DL),
-                "PMT path: " + os.path.basename(self.patmasttab_path_DL),
-                "Folder path: " + self.folderpath_DL,
-                "Chosen target(s): " + str([str(x.text()) for x in self.targets_DL]),
-                "Max epochs: " + str(self.max_epochs_DL),
-                "Batch size: " + str(self.batch_size_DL),
-                "Max tile num: " + str(self.max_tile_num_DL),
-                "GPU Num: " +str(self.gpu_num_DL),
-                "Mode: " +str(self.mode_DL),
-                "validation ratio: " +str(self.validratio_DL)+"%",
-                "K-folds: " +str(self.kfolds_DL),
-                "Tile path: " + self.tilepath_DL,
-                "Cohort list"+ str(self.cohortlist_DL),
-                "ADVANCED SETTINGS:",
-                "GPU num: " + str(self.advanced_values[0]),
-                "Binarize quantil: " + str(self.advanced_values[1]),
-                ]
-
-        print(*text, sep='\n')
-
-        msgBox = QtWidgets.QMessageBox()
-        msgBox.setText("Are you sure you want to run the training?")
-        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-        returnValue = msgBox.exec()
-        if returnValue == QtWidgets.QMessageBox.Ok:
-            print('OK clicked')
-        
-            try:
-                if self.mode_DL == 'test/train':
-
-                    do_experiment(
+        def execute_traintest():
+            do_experiment(
                         project_dir=self.projectname_DL,
                         get=get.MultiTarget(
                             get.SimpleRun(),
@@ -184,19 +155,18 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                             ),
                             
                             train=Train(
-                                
                                 batch_size= int(self.batch_size_DL),
                                 max_epochs=int(self.max_epochs_DL),
-                                
                                 )
-                        ) 
+                        )
 
-                elif self.mode_DL == 'k-fold cross validation':
-                    cohorts_df=pd.concat([
-                                        cohort(tile_path, clin_path, slid_path)
-                                        for tile_path, clin_path, slid_path in self.cohortlist_DL ])
-                    
-                    do_experiment(
+        def execute_Kfold():
+            cohorts_df=pd.concat([
+                                    cohort(tile_path, clin_path, slid_path)
+                                    for tile_path, clin_path, slid_path in self.cohortlist_DL ]
+                                )
+
+            do_experiment(
                         project_dir=self.folderpath_DL,
                         get=get.MultiTarget(    
                         get.Crossval(),
@@ -217,7 +187,63 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                         ),
                         devices={'cuda:0': 4},
                         num_concurrent_tasks=0,
-                )
+                        )
+
+
+        cohortnamelist_DL=[]
+        cohortlist_DL=[]
+
+        # Looping through items
+        for item_index in range(self.ui.cohortlist_DL.count()):  
+                # Getting the data embedded in each item from the listWidget
+                item_data = self.ui.cohortlist_DL.item(item_index).data(QtCore.Qt.UserRole)  
+                cohortlist_DL.append(item_data)
+                # Getting the datatext of each item from the listWidget
+                item_text = self.ui.cohortlist_DL.item(item_index).text()  
+                cohortnamelist_DL.append(item_text)
+
+        text = [
+                "Folder path: " + self.folderpath_DL,
+                "PMT path: " + os.path.basename(self.patmasttab_path_DL),
+                "SMT path: " + os.path.basename(self.slidmasttab_path_DL),
+                "Folder path: " + self.folderpath_DL,
+                "Chosen target(s): " + str([str(x.text()) for x in self.targets_DL]),
+                "Max epochs: " + str(self.max_epochs_DL),
+                "Batch size: " + str(self.batch_size_DL),
+                "Max tile num: " + str(self.max_tile_num_DL),
+                "GPU Num: " +str(self.gpu_num_DL),
+                "Mode: " +str(self.mode_DL),
+                "validation ratio: " +str(self.validratio_DL)+"%",
+                "K-folds: " +str(self.kfolds_DL),
+                "Tile path: " + self.tilepath_DL,
+                "Cohort list"+ str(cohortlist_DL),
+                "Cohort Name list"+ str(cohortnamelist_DL),
+                "ADVANCED SETTINGS:",
+                "GPU num: " + str(self.advanced_values[0]),
+                "Binarize quantil: " + str(self.advanced_values[1]),
+                ]
+
+        print(*text, sep='\n')
+        
+
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setText("Are you sure you want to run the training?")
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        returnValue = msgBox.exec()
+        if returnValue == QtWidgets.QMessageBox.Ok:
+            print('OK clicked')
+        
+            try:
+                if self.mode_DL == 'test/train':
+                    self.worker = Worker(execute_traintest) # Any other args, kwargs are passed to the run function
+                    # Execute
+                    self.threadpool.start(self.worker)
+                     
+
+                elif self.mode_DL == 'k-fold cross validation':
+                    self.worker = Worker(execute_Kfold) # Any other args, kwargs are passed to the run function
+                    # Execute
+                    self.threadpool.start(self.worker)
                 
                 else:
                     raise ValueError(self.mode_DL)
@@ -228,12 +254,14 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
             finally:
                 print("cont'd")
+
     def resetDL_click(self):
-        self.ui.project_name_DL.clear()
-        self.projectname_DL = self.ui.project_name_DL.text()
+        
+        
         self.slidmasttab_path_DL = " "
         self.patmasttab_path_DL = " "
         self.folderpath_DL = " "
+        self.tilepath_DL = " "
         self.ui.choosetarg_DL.clear()
         self.targets_DL = self.ui.choosetarg_DL.selectedItems()
         self.ui.kfolds_DL.setEnabled(False)
@@ -248,11 +276,11 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.batch_size_DL = self.ui.batch_size_DL.text()
         self.ui.maxTileNum_DL.setProperty("value", 0)  # hardcoded
         self.max_tile_num_DL = self.ui.maxTileNum_DL.text()
-        self.ui.cohort_list_DL.clear()
-        self.cohortlist = []
+        self.ui.cohortlist_DL.clear()
         self.ui.GPU_num_DL.setProperty("value", 3)  # hardcoded
         self.gpu_num_DL = self.ui.GPU_num_DL.text()
         self.advanced_values = [0, 0]  # basic values from advanced settings Default NEEDS TO BE SET
+
     def open_DL_dialog(self):
         """open advanced settings for Deep Learn"""
         my_dialog = MyDialog()
@@ -260,13 +288,14 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if execval == True:
             self.advanced_values = my_dialog.save_advanced()  # values from dialog window
         print(self.advanced_values)
+
     def add_list_clicked_DL(self):
 
         t1 = "SMT path: " + os.path.basename(self.slidmasttab_path_DL)
         t2 = "PMT path: " + os.path.basename(self.patmasttab_path_DL)
         t3 = "tile path: " + self.tilepath_DL
         text="Do you wont to save this setting?"+"\n\n"+"\n\n"+t1+"\n\n"+t2+"\n\n"+t3
-
+        data=[self.tilepath_DL,self.patmasttab_path_DL,self.slidmasttab_path_DL]
 
         msgBox=QtWidgets.QMessageBox()
         msgBox.setText(text)
@@ -274,76 +303,57 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         returnValue = msgBox.exec()
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
-            n_items=self.ui.cohort_list_DL.count()+1
+            n_items=self.ui.cohortlist_DL.count()+1
             item = QtWidgets.QListWidgetItem(f"Cohort {n_items}")
 
             item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsEnabled)
+            
+            # Setting your QListWidgetItem Data  
+            item.setData(QtCore.Qt.UserRole, data) 
 
-            self.ui.cohort_list_DL.addItem(item)
+            self.ui.cohortlist_DL.addItem(item)
 
-
-
-            #self.ui.cohort_list_DL.addItem(f"Cohort {n_items}")
-
-            self.cohortlist_DL.append([self.tilepath_DL,self.patmasttab_path_DL,self.slidmasttab_path_DL])
     def delete_list_clicked_DL(self):
-        self.ui.cohort_list_DL.clear()
+        self.ui.cohortlist_DL.clear()
+
     def changename_DL(self):
-        i=0
-        t1,t2,t3 = self.cohortlist_DL[i]
-        t1 = "SMT path: " + str(t1)
+        item_index = self.ui.cohortlist_DL.currentRow()
+        t1,t2,t3=self.ui.cohortlist_DL.item(item_index).data(QtCore.Qt.UserRole)
+        t1 = "tile path: " + str(t1)
         t2 = "PMT path: " + str(t2)
-        t3 = "tile path: " + str(t3)
+        t3 = "SMT path: " + str(t3)
+        
         text = "Cohort:" + "cohortname" + "\n\n" + "\n\n" + t1 + "\n\n" + t2 + "\n\n" + t3
-        print(str(self.clicked_cohort_DL))
+        #print(str(self.clicked_cohort_DL))
 
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText(text)
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-        msgBox.addButton("delete cohort",QtWidgets.QMessageBox.ActionRole)
+        deleteButton = msgBox.addButton("delete cohort",QtWidgets.QMessageBox.ActionRole)
         returnValue = msgBox.exec()
-
-
-    def execute_this_fn(self):
-       
-        for i in range(4):
-            time.sleep(1)    
-            print("start pipeline.")
-
+        if deleteButton == msgBox.clickedButton():
+            print("delete cohort")
+            self.ui.cohortlist_DL.takeItem(self.ui.cohortlist_DL.currentRow())
+              
     def testclick_DL(self):
 
-        msgBox = QtWidgets.QMessageBox()
-        msgBox.setText("Do you want to start the pipeline?")
-        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-        returnValue = msgBox.exec()
-        if returnValue == QtWidgets.QMessageBox.Ok:
-            self.ui.stop_DL.setEnabled(True)
-            print('OK clicked')
-            self.worker = Worker(self.execute_this_fn) # Any other args, kwargs are passed to the run function
-            # Execute
-            self.threadpool.start(self.worker)
-        
-        
+        project_dir='C:/Users/tseibel/Desktop/test/savepath' 
+        tiles_path='C:/Users/tseibel/Desktop/test/BLOCKS_NORM_MACENKO'
+        clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_CLINI.xlsx'
+        slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_SLIDE.xlsx'
+        target_label=['ER Status By IHC','Cancer Type Detailed']
+        cohorts_df = cohort(
+                                tiles_path,
+                                clini_path,
+                                slide_path
+                            )
 
-        if False:
-            project_dir='C:/Users/tseibel/Desktop/test/savepath' 
-            tiles_path='C:/Users/tseibel/Desktop/test/BLOCKS_NORM_MACENKO'
-            clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_CLINI.xlsx'
-            slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_SLIDE.xlsx'
-            target_label=['ER Status By IHC','Cancer Type Detailed']
-            cohorts_df = cohort(
-                            tiles_path,
-                            clini_path,
-                            slide_path
-                        )
-
-
+        def Execute_test():
             do_experiment(
                     project_dir=project_dir,
                     get=get.MultiTarget(    
                     get.Crossval(),
                     get.SimpleRun(),
-
                     cohorts_df=cohorts_df,
                     target_labels=target_label,  
                     max_train_tile_num=int(self.max_tile_num_DL),  
@@ -351,8 +361,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     folds = int(self.kfolds_DL),
                     valid_frac=self.validratio_DL/100,
                     balance=True,   # weather to balance the training set
-                    
-                    
                     #min_support=5,
                     train=Train(
                         batch_size= int(self.batch_size_DL),
@@ -363,10 +371,18 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     num_concurrent_tasks=0,
                 )
 
-
-    def stopclick_DL(self):   
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setText("Do you want to start the pipeline?")
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        returnValue = msgBox.exec()
+        if returnValue == QtWidgets.QMessageBox.Ok:
+            self.ui.stop_DL.setEnabled(True)
+            print('OK clicked')
+            self.worker = Worker(Execute_test) # Any other args, kwargs are passed to the run function
+            # Execute
+            self.threadpool.start(self.worker)
         
-
+    def stopclick_DL(self):   
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Do you want to stop the pipeline?\n Progress will be lost.")
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
@@ -377,13 +393,14 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             #kill worker, TO DO
             #####
             print("close pipeline")
-            
+
+
 
     ### DEPLOY
     def open_project_dir_Deploy(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, "\home")
         if path != ('', ''):
-            self.project_dir_open = path
+            self.project_dir_deploy = path
 
     def open_patmasttab_deploy(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData", "*.xlsx")
@@ -403,7 +420,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.ui.targetlabels2_Deploy.addItems(list(df))
 
     def open_slidmasttab_Deploy(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData", "*.csv")
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData")
         if path != ('', ''):
             self.slidmasttab_path_deploy = path[0]
             print(path)
@@ -414,14 +431,27 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.choose_tiledir_deploy = path
 
     def open_model_path_Deploy(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/models", "*.csv")
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/models", "*.pkl")
         if path != ('', ''):
             self.model_path_deploy = path[0]
             print(path)
 
     def run_Deploy_click(self):
+
+        cohortnamelist_Deploy=[]
+        cohortlist_Deploy=[]
+
+        # Looping through items
+        for item_index in range(self.ui.cohortlist_Deploy.count()):  
+                # Getting the data embedded in each item from the listWidget
+                item_data = self.ui.cohortlist_Deploy.item(item_index).data(QtCore.Qt.UserRole)  
+                cohortlist_Deploy.append(item_data)
+                # Getting the datatext of each item from the listWidget
+                item_text = self.ui.cohortlist_Deploy.item(item_index).text()  
+                cohortnamelist_Deploy.append(item_text)
+
         print("run")
-        text = ["Project dir: " + str(self.project_dir_open),
+        text = ["Project dir: " + str(self.project_dir_deploy),
                 "batch size: " + str(self.ui.batchsize_Deploy.text()),
                 "max tile num: " + str(self.ui.maxtilenum_Deploy.text()),
                 "SMT path: " + os.path.basename(self.slidmasttab_path_deploy),
@@ -431,7 +461,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 "target evaluator" + str("yes"),
                 "chosen groups: " + str([str(x.text()) for x in self.ui.targetlabels_Deploy.selectedItems()]),
                 "chosen subgroups: " + str([str(x.text()) for x in self.ui.targetlabels2_Deploy.selectedItems()]),
-                "cohortlists:" + str(self.cohortlist_deploy),
+                "cohortlists:" + str(cohortlist_Deploy),
+                "cohort name list" + str(cohortnamelist_Deploy),
                 ]
         print(*text, sep='\n')
 
@@ -443,7 +474,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             print('OK clicked')
             try:
                 do_experiment(
-                    project_dir=self.project_dir_open,
+                    project_dir=self.project_dir_deploy,
                     get=get.MultiTarget(
                         get.SimpleRun(),
                         test_cohorts_df=pd.concat(
@@ -452,7 +483,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                         ),
                         target_labels=[str(x.text()) for x in self.ui.targetlabels_Deploy.selectedItems()],
                         train=Load(
-                            project_dir=self.project_dir_open,
+                            project_dir=self.project_dir_deploy,
                             training_project_dir=self.model_path_deploy),
                         evaluators=[Grouped(auroc), Grouped(p_value)],
                         crossval_evaluators=[AggregateStats(label='fold')],
@@ -466,19 +497,18 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             finally:
                 print("cont'd")
 
-
-
     def reset_Deploy_click(self):
         self.cohort_path_deploy = ""
         self.tile_dir_deploy = ""
         self.model_path_deploy = ""
-        self.project_dir_open = ""
+        self.project_dir_deploy = ""
         self.ui.targetlabels_Deploy.clear()
         self.ui.targetlabels2_Deploy.clear()
         self.ui.batchsize_Deploy.setProperty("value",64) #hardcoded
         self.cohortlist_deploy = []
-
+        self.cohort_name_list_deploy= []
         print("reset")
+
     def advanced_Deploy_click(self):
         print("advanced settings")
         #still empty
@@ -489,6 +519,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         t2 = "PMT path: " + os.path.basename(self.patmasttab_path_deploy)
         t3 = "tile directory: " + str(self.choose_tiledir_deploy)
         text="Do you wont to save this setting?"+"\n\n"+"\n\n"+t1+"\n\n"+t2+"\n\n"+t3
+        data=[self.choose_tiledir_deploy,self.patmasttab_path_deploy,self.slidmasttab_path_deploy]
+
         msgBox=QtWidgets.QMessageBox()
         msgBox.setText(text)
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
@@ -496,10 +528,45 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
             n_items=self.ui.cohortlist_Deploy.count()+1
-            self.ui.cohortlist_Deploy.addItem(f"Cohort {n_items}")
-            self.cohortlist_deploy.append([os.path.basename(self.slidmasttab_path_deploy),os.path.basename(self.patmasttab_path_deploy),str(self.choose_tiledir_deploy)])
+            item = QtWidgets.QListWidgetItem(f"Cohort {n_items}")
+
+            item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsEnabled)
+            
+            # Setting your QListWidgetItem Data  
+            item.setData(QtCore.Qt.UserRole, data) 
+
+            self.ui.cohortlist_Deploy.addItem(item)
+
     def delete_list_clicked_Deploy(self):
         self.ui.cohortlist_Deploy.clear()
+
+    def changename_Deploy(self):
+        item_index = self.ui.cohortlist_Deploy.currentRow()
+        t1,t2,t3=self.ui.cohortlist_Deploy.item(item_index).data(QtCore.Qt.UserRole)
+        t1 = "Tile path: " + str(t1)
+        t2 = "PMT path: " + str(t2)
+        t3 = "SMT path: " + str(t3)
+        
+        text = "Cohort:" + "cohortname" + "\n\n" + "\n\n" + t1 + "\n\n" + t2 + "\n\n" + t3
+        
+
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setText(text)
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        deleteButton = msgBox.addButton("delete cohort",QtWidgets.QMessageBox.ActionRole)
+        returnValue = msgBox.exec()
+        if deleteButton == msgBox.clickedButton():
+            print("delete cohort")
+            self.ui.cohortlist_Deploy.takeItem(self.ui.cohortlist_Deploy.currentRow())
+              
+
+
+
+
+
+
+
+
     ###Visualize
     def count_up(self):
         n=self.ui.imgcounter_Vis.intValue()
