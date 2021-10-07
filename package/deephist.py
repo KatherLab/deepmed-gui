@@ -4,6 +4,7 @@ from PyQt5.QtCore import  QThreadPool
 from PyQt5.QtCore import pyqtSlot
 from package.mainwindow import Ui_gui_histo_main
 from package.advanced_settings import Ui_advanced_settings
+from package.cohort_window import Ui_cohort_settings
 import os
 import pandas as pd
 from deepmed.evaluators.aggregate_stats import AggregateStats
@@ -54,6 +55,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.cohortlist_DL.itemClicked.connect(self.changename_DL)
         self.ui.test_dl.clicked.connect(self.testclick_DL)
         self.ui.stop_DL.clicked.connect(self.stopclick_DL)
+        self.ui.cohort_click.clicked.connect(self.cohortclick_DL)
         ###########
 
 
@@ -67,7 +69,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.choose_tiledir_deploy = ""  # empty values
         self.cohortlist_deploy= []
         self.cohort_name_list_deploy= []
-
+        self.targets_Deploy = self.ui.targetlabels_Deploy.selectedItems()
 
 
 
@@ -82,6 +84,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.addlist_Deploy.clicked.connect(self.add_list_clicked_Deploy)
         self.ui.del_list_deploy.clicked.connect(self.delete_list_clicked_Deploy)
         self.ui.cohortlist_Deploy.itemClicked.connect(self.changename_Deploy)
+        self.ui.test_Deploy.clicked.connect(self.testclick_Deploy)
         ###########
         # Events Visualize
         self.ui.nextIm_Vis.clicked.connect(self.count_up)
@@ -159,6 +162,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                                 max_epochs=int(self.max_epochs_DL),
                                 )
                         )
+                        
 
         def execute_Kfold():
             cohorts_df=pd.concat([
@@ -283,7 +287,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def open_DL_dialog(self):
         """open advanced settings for Deep Learn"""
-        my_dialog = MyDialog()
+        my_dialog = Advanced_Sets()
         execval = my_dialog.exec_()
         if execval == True:
             self.advanced_values = my_dialog.save_advanced()  # values from dialog window
@@ -341,7 +345,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         tiles_path='C:/Users/tseibel/Desktop/test/BLOCKS_NORM_MACENKO'
         clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_CLINI.xlsx'
         slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_SLIDE.xlsx'
-        target_label=['ER Status By IHC','Cancer Type Detailed']
+        target_label=['ER Status By IHC','Cancer Type Detailed', 'Neoplasm Histologic Type Name', 
+                    'Fraction Genome Altered']
         cohorts_df = cohort(
                                 tiles_path,
                                 clini_path,
@@ -352,23 +357,24 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             do_experiment(
                     project_dir=project_dir,
                     get=get.MultiTarget(    
-                    get.Crossval(),
+                    
                     get.SimpleRun(),
-                    cohorts_df=cohorts_df,
+                    train_cohorts_df=cohorts_df,
                     target_labels=target_label,  
-                    max_train_tile_num=int(self.max_tile_num_DL),  
-                    max_valid_tile_num=128,  #TO DO
-                    folds = int(self.kfolds_DL),
-                    valid_frac=self.validratio_DL/100,
+                    max_train_tile_num=500, # how many tiles from each whole slide image (maximum)
+                    min_support=8,    # how many patients are required in each category?
+                    valid_frac=.2,    # which fraction of patients is used for validation (early stopping)+
+                    na_values=['NA','Not Available', 'Equivocal', 'Not Performed'],
                     balance=True,   # weather to balance the training set
                     #min_support=5,
                     train=Train(
-                        batch_size= int(self.batch_size_DL),
+                        batch_size= 128,
                         max_epochs=int(self.max_epochs_DL),
                         ),
                     ),
                     devices={'cuda:0': 4},
                     num_concurrent_tasks=0,
+                    
                 )
 
         msgBox = QtWidgets.QMessageBox()
@@ -394,6 +400,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             #####
             print("close pipeline")
 
+    def cohortclick_DL(self):
+        """open cohort settings for Deep Learn"""
+        my_dialog = Cohort_Sets()
+        execval = my_dialog.exec_()
+        #if execval == True:
+        #    self.advanced_values = my_dialog.save_advanced()  # values from dialog window
+        #    print(self.advanced_values)
 
 
     ### DEPLOY
@@ -437,6 +450,31 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             print(path)
 
     def run_Deploy_click(self):
+        
+        def execute_deploy():
+            do_experiment(
+                    project_dir=self.project_dir_deploy,
+                    get=get.MultiTarget(    
+                    get.SimpleRun(),
+                    test_cohorts_df = pd.concat([
+                                cohort(tile_path, clin_path, slid_path)
+                                for tile_path, clin_path, slid_path in self.cohortlist_deploy ]
+                            )  ,
+                    target_labels = [str(x.text()) for x in self.targets_Deploy],  
+                    
+                   
+                    balance=True,   # weather to balance the training set
+                    #min_support=5,
+                    train=Load(
+                            project_dir=self.project_dir_deploy,
+                            training_project_dir=self.model_path_deploy),
+                    ),
+                    evaluators=[Grouped(auroc), Grouped(p_value)],
+                        crossval_evaluators=[AggregateStats(label='fold')],
+                        multi_target_evaluators=[AggregateStats(label='target', over=['fold'])],
+                )
+
+
 
         cohortnamelist_Deploy=[]
         cohortlist_Deploy=[]
@@ -473,23 +511,11 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
             try:
-                do_experiment(
-                    project_dir=self.project_dir_deploy,
-                    get=get.MultiTarget(
-                        get.SimpleRun(),
-                        test_cohorts_df=pd.concat(
-                            cohort(tiles_path, clini_path, slide_path)
-                            for slide_path, clini_path, tiles_path in self.cohortlist_deploy
-                        ),
-                        target_labels=[str(x.text()) for x in self.ui.targetlabels_Deploy.selectedItems()],
-                        train=Load(
-                            project_dir=self.project_dir_deploy,
-                            training_project_dir=self.model_path_deploy),
-                        evaluators=[Grouped(auroc), Grouped(p_value)],
-                        crossval_evaluators=[AggregateStats(label='fold')],
-                        multi_target_evaluators=[AggregateStats(label='target', over=['fold'])]
-                    )
-                )
+                self.worker = Worker(execute_deploy) # Any other args, kwargs are passed to the run function
+                # Execute
+                self.threadpool.start(self.worker)
+                
+                
             except:
                 # if not working raise dialog
                 QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")
@@ -558,7 +584,51 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if deleteButton == msgBox.clickedButton():
             print("delete cohort")
             self.ui.cohortlist_Deploy.takeItem(self.ui.cohortlist_Deploy.currentRow())
-              
+
+    def testclick_Deploy(self):
+         
+        project_dir='C:/Users/tseibel/Desktop/test/testbuttonbenchmark' 
+        
+
+        def Execute_test():
+            do_experiment(
+                    project_dir=project_dir,
+                    get=get.MultiTarget(    
+                    get.SimpleRun(),
+                    test_cohorts_df = cohort(
+                    tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
+                    clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
+                    slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx')  ,
+                    target_labels =['ER Status By IHC','Cancer Type Detailed', 'Neoplasm Histologic Type Name', 
+                    'Fraction Genome Altered'],  
+                    na_values=['NA','Not Available', 'Equivocal', 'Not Performed'],
+                   
+                    balance=True,   # weather to balance the training set
+                    #min_support=5,
+                    evaluators=[Grouped(auroc), Grouped(p_value)],
+                       
+                        multi_target_evaluators=[AggregateStats(label='target')],
+                    train=Load(
+                            project_dir=self.project_dir_deploy,
+                            training_project_dir=self.model_path_deploy),
+                    ),
+                    
+                )
+
+
+            
+
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setText("Do you want to start the deployment?")
+        msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        returnValue = msgBox.exec()
+        if returnValue == QtWidgets.QMessageBox.Ok:
+            self.ui.stop_DL.setEnabled(True)
+            print('OK clicked')
+            self.worker = Worker(Execute_test) # Any other args, kwargs are passed to the run function
+            # Execute
+            self.threadpool.start(self.worker)
+                 
 
 
 
@@ -578,11 +648,11 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.ui.imgcounter_Vis.display(n-1)
 
 
-class MyDialog(QtWidgets.QDialog):
+class Advanced_Sets(QtWidgets.QDialog):
     """"advanced settings dialog for Deep Learn"""
 
     def __init__(self, parent=None):
-        super(MyDialog, self).__init__(parent)
+        super(Advanced_Sets, self).__init__(parent)
         self.ui = Ui_advanced_settings()
         self.ui.setupUi(self)
 
@@ -600,6 +670,18 @@ class MyDialog(QtWidgets.QDialog):
     def reset_advanced(self):
         self.ui.GPUnum.setProperty("value", 4)
         self.ui.binarize_quantile.setProperty("value", 14)
+
+class Cohort_Sets(QtWidgets.QDialog):
+    """"cohort settings dialog for Deep Learn"""
+
+    def __init__(self, parent=None):
+        super(Cohort_Sets, self).__init__(parent)
+        self.ui = Ui_cohort_settings()
+        self.ui.setupUi(self)
+
+        
+
+    
 
 ##
 
