@@ -69,9 +69,6 @@ class Ui_cohort_settings(object):
         self.verticalLayout.addLayout(self.gridLayout)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.reset_button = QtWidgets.QPushButton(self.verticalLayoutWidget)
-        self.reset_button.setObjectName("reset_button")
-        self.horizontalLayout.addWidget(self.reset_button)
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem3)
         self.save_button = QtWidgets.QPushButton(self.verticalLayoutWidget)
@@ -96,7 +93,6 @@ class Ui_cohort_settings(object):
         self.label_5.setText(_translate("cohort_settings", "Sub Categories:"))
         self.or_button.setText(_translate("cohort_settings", "or"))
         self.label_3.setText(_translate("cohort_settings", "Querybox"))
-        self.reset_button.setText(_translate("cohort_settings", "Reset"))
         self.save_button.setText(_translate("cohort_settings", "Save"))
         self.cancel_button.setText(_translate("cohort_settings", "Cancel"))
 
