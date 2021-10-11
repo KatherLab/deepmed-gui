@@ -26,8 +26,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.patmasttab_path_DL = " "  # empty values
         self.folderpath_DL = " "  # empty values
         self.tilepath_DL = " "  # empty values
-        self.advanced_values = [0, 0]  # basic values from advanced settings Default NEEDS TO BE SET
-
+        self.advanced_values = [0,0]  # basic values from advanced settings Default NEEDS TO BE SET
+        self.cohort_values_DL = []
         self.batch_size_DL = self.ui.batch_size_DL.text()
         self.max_tile_num_DL = self.ui.maxTileNum_DL.text()
         self.max_epochs_DL = self.ui.max_epochs_DL.text()
@@ -41,7 +41,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.threadpool = QtCore.QThreadPool()
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-
+        self.ui.advanced_sets_DL.setEnabled(False) # disable advanced settings for now
         self.ui.slide_masttab_DL.clicked.connect(self.open_slidmasttab)
         self.ui.clini_table_DL.clicked.connect(self.open_patmasttab)
         self.ui.savingpath_DL.clicked.connect(self.open_savingpath)
@@ -60,6 +60,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
 
         # Events Deploy
+        
         self.project_dir_deploy = ""  # empty values
         self.batch_size_deploy = self.ui.batchsize_Deploy
         self.max_tile_num_deploy = self.ui.maxtilenum_Deploy
@@ -72,7 +73,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.targets_Deploy = self.ui.targetlabels_Deploy.selectedItems()
 
 
-
+        self.ui.advanced_Deploy.setEnabled(False) # disable advanced settings for now
         self.ui.projectdir_Deploy.clicked.connect(self.open_project_dir_Deploy)
         self.ui.choose_slidetable_Deploy.clicked.connect(self.open_slidmasttab_Deploy)
         self.ui.choose_tiledir_Deploy.clicked.connect(self.open_tile_dir_Deploy)
@@ -404,9 +405,9 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         """open cohort settings for Deep Learn"""
         my_dialog = Cohort_Sets()
         execval = my_dialog.exec_()
-        #if execval == True:
-        #    self.advanced_values = my_dialog.save_advanced()  # values from dialog window
-        #    print(self.advanced_values)
+        if execval == True:
+            self.cohort_values_DL = my_dialog.save_cohort()  # values from dialog window
+            print(self.cohort_values_DL)
 
 
     ### DEPLOY
@@ -616,16 +617,39 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 )
 
 
-            
+        def Execute_test2():
+            project_dir2='C:/Users/tseibel/Desktop/test/savepath1' 
+            do_experiment(
+                    project_dir=project_dir2,
+                    get=get.MultiTarget(    
+                    get.SimpleRun(),
+                    test_cohorts_df = cohort(
+                    tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
+                    clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
+                    slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx')  ,
+                    target_labels =['ER Status By IHC'],  
+                    na_values=['NA','Not Available', 'Equivocal', 'Not Performed'],
+                   
+                    balance=True,   # weather to balance the training set
+                    #min_support=5,
+                    evaluators=[Grouped(auroc), Grouped(p_value)],
+                       
+                        
+                    train=Load(
+                            project_dir='C:/Users/tseibel/Desktop/test/savepath1',
+                            training_project_dir='C:/Users/tseibel/Desktop/test/savepath1'),
+                    ),
+                    
+                )
 
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Do you want to start the deployment?")
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         returnValue = msgBox.exec()
         if returnValue == QtWidgets.QMessageBox.Ok:
-            self.ui.stop_DL.setEnabled(True)
+            
             print('OK clicked')
-            self.worker = Worker(Execute_test) # Any other args, kwargs are passed to the run function
+            self.worker = Worker(Execute_test2) # Any other args, kwargs are passed to the run function
             # Execute
             self.threadpool.start(self.worker)
                  
@@ -646,6 +670,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         n=self.ui.imgcounter_Vis.intValue()
         if n>0:
             self.ui.imgcounter_Vis.display(n-1)
+
 
 
 class Advanced_Sets(QtWidgets.QDialog):
@@ -679,9 +704,118 @@ class Cohort_Sets(QtWidgets.QDialog):
         self.ui = Ui_cohort_settings()
         self.ui.setupUi(self)
 
+        #Values
+        self.text = []
+        self.groupname = ""
+        self.subgroupname = ""
+       
+        self.path = 'C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_CLINI.xlsx'
+        self.df = pd.read_excel(self.path)
+        self.ui.groups.setEnabled(True)
+        self.ui.groups.clear()
+        self.ui.groups.addItems(list(self.df))
+
+        self.ui.subgroups.setEnabled(False)
+        self.ui.and_button.setEnabled(False)
+        self.ui.or_button.setEnabled(False)
+        self.ui.back_button.setEnabled(False)
+
+
+        #Events
+        self.ui.and_button.clicked.connect(self.and_clicked)
+        self.ui.back_button.clicked.connect(self.back_clicked)
+        self.ui.or_button.clicked.connect(self.or_clicked)
+        self.ui.save_button.clicked.connect(self.accept)
+        self.ui.cancel_button.clicked.connect(self.close)
+        self.ui.groups.activated.connect(self.groups_clicked)
+        self.ui.subgroups.activated.connect(self.subgroup_clicked)
+    
+    def and_clicked(self):
+        self.ui.subgroups.clear()
+        self.ui.subgroups.setEnabled(False)
+        self.ui.and_button.setEnabled(False)
+        self.ui.or_button.setEnabled(False)
+        self.ui.back_button.setEnabled(False)
+        
+        self.text.append(self.groupname + self.subgroupname)
+        self.text.append(" AND ")
+        self.ui.querybox.setText(''.join(self.text))
+
+        self.groupname = ""
+        self.subgroupname = ""
         
 
+    def back_clicked(self):
+        if len(self.text)>1 and  self.groupname == "":
+            self.text=self.text[0:-1]
+        elif len(self.text)==1 and  self.groupname == "":
+            self.text=[]
+        self.groupname = ""
+        self.subgroupname = ""
+        self.ui.querybox.setText(''.join(self.text))
+
+    def or_clicked(self):
+        self.ui.subgroups.clear()
+        self.ui.subgroups.setEnabled(False)
+        self.ui.and_button.setEnabled(False)
+        self.ui.or_button.setEnabled(False)
+        self.ui.back_button.setEnabled(False)
+        
+        self.text.append(self.groupname + self.subgroupname)
+        self.text.append(" OR ")
+        self.ui.querybox.setText(''.join(self.text))
+        
+        self.groupname = ""
+        self.subgroupname = ""
+
+
+    def save_cohort(self):
+         print("Save...")
+         return self.text
+
     
+
+    def groups_clicked(self):
+        print(self.ui.groups.currentText())
+        subgroup_cat = pd.Categorical(self.df[self.ui.groups.currentText()])
+
+        
+        
+        
+        self.ui.subgroups.clear()
+        self.ui.subgroups.setEnabled(False)
+        self.ui.and_button.setEnabled(True)
+        self.ui.or_button.setEnabled(True)
+        self.ui.back_button.setEnabled(True)
+        self.subgroupname = ""
+        self.groupname = self.ui.groups.currentText()
+        addText = "<span style=\" font-size:8pt; font-weight:400; color:#0000ff;\" >"+self.groupname+"</span>"
+        self.ui.querybox.setText(''.join(self.text) + addText  )
+        
+        self.ui.querybox.setText(''.join(self.text) + addText  )
+        if len(subgroup_cat.categories)<17:
+            self.ui.subgroups.setEnabled(True)
+            self.ui.subgroups.addItem("-no subgrouping-")
+            self.ui.subgroups.addItems([str(val) for val in subgroup_cat.categories])
+        
+            
+    def subgroup_clicked(self):
+        self.ui.and_button.setEnabled(True)
+        self.ui.or_button.setEnabled(True)
+        self.ui.back_button.setEnabled(True)
+
+        self.subgroupname = "[" + self.ui.subgroups.currentText() + "]"
+        
+
+        if self.ui.subgroups.currentText() !=  "-no subgrouping-":
+            addText =self.groupname + self.subgroupname
+            
+        else:
+            addText =self.groupname 
+
+        addText = "<span style=\" font-size:8pt; font-weight:400; color:#0000ff;\" >"+ addText +"</span>"
+        self.ui.querybox.setText(''.join(self.text) + addText  )
+        
 
 ##
 
