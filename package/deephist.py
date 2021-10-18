@@ -403,7 +403,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def cohortclick_DL(self):
         """open cohort settings for Deep Learn"""
-        my_dialog = Cohort_Sets()
+        path = self.patmasttab_path_DL
+        my_dialog = Cohort_Sets(path)
         execval = my_dialog.exec_()
         if execval == True:
             self.cohort_values_DL = my_dialog.save_cohort()  # values from dialog window
@@ -699,21 +700,27 @@ class Advanced_Sets(QtWidgets.QDialog):
 class Cohort_Sets(QtWidgets.QDialog):
     """"cohort settings dialog for Deep Learn"""
 
-    def __init__(self, parent=None):
+    def __init__(self,path, parent=None):
         super(Cohort_Sets, self).__init__(parent)
+
         self.ui = Ui_cohort_settings()
         self.ui.setupUi(self)
-
+        self.path = path
         #Values
         self.text = []
         self.groupname = ""
         self.subgroupname = ""
        
-        self.path = 'C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_CLINI.xlsx'
-        self.df = pd.read_excel(self.path)
-        self.ui.groups.setEnabled(True)
-        self.ui.groups.clear()
-        self.ui.groups.addItems(list(self.df))
+        #self.path = 'cliniData/TCGA-BRCA-DX_CLINI.xlsx'
+        try:
+            self.df = pd.read_excel(self.path)
+            self.ui.groups.setEnabled(True)
+            self.ui.groups.clear()
+            self.ui.groups.addItems(list(self.df))
+        except:
+            QtWidgets.QMessageBox.critical(self, "Error", "problem with the   \n clinitable ")
+        finally:
+            print("cont'd")
 
         self.ui.subgroups.setEnabled(False)
         self.ui.and_button.setEnabled(False)
