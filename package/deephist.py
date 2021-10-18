@@ -27,7 +27,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.folderpath_DL = " "  # empty values
         self.tilepath_DL = " "  # empty values
         self.advanced_values = [0,0]  # basic values from advanced settings Default NEEDS TO BE SET
-        self.cohort_values_DL = []
+        self.subgroup_values_DL = [] # from subgroups
         self.batch_size_DL = self.ui.batch_size_DL.text()
         self.max_tile_num_DL = self.ui.maxTileNum_DL.text()
         self.max_epochs_DL = self.ui.max_epochs_DL.text()
@@ -145,30 +145,32 @@ class Mainwindow_con(QtWidgets.QMainWindow):
     def runDL_click(self):
         def execute_traintest():
             do_experiment(
-                        project_dir=self.projectname_DL,
+                        project_dir=self.folderpath_DL,
                         get=get.MultiTarget(
                             get.SimpleRun(),
                             train_cohorts_df=pd.concat([
                                 cohort(tile_path, clin_path, slid_path)
-                                for tile_path, clin_path, slid_path in self.cohortlist_DL ]
+                                for tile_path, clin_path, slid_path in cohortlist_DL ]
                             ),
-                            target_labels=[str(x.text()) for x in self.targets_DL],  
+                            target_labels=[str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()],  
                             resample_each_epoch=True,
-                            valid_frac=self.validratio_DL/100,
-                            
+                            valid_frac=int(self.validratio_DL)/100,
+                            na_values=['NA','Not Available', 'Equivocal', 'Not Performed',"unknown","na","Na","nA","NA","x"],
                             ),
                             
                             train=Train(
-                                batch_size= int(self.batch_size_DL),
-                                max_epochs=int(self.max_epochs_DL),
-                                )
+                                batch_size= int(self.ui.batch_size_DL.text()),
+                                max_epochs=int(self.ui.max_epochs_DL.text()),
+                                ),
+                                devices={'cuda:0': 8},
+                        num_concurrent_tasks=0,
                         )
                         
 
         def execute_Kfold():
             cohorts_df=pd.concat([
                                     cohort(tile_path, clin_path, slid_path)
-                                    for tile_path, clin_path, slid_path in self.cohortlist_DL ]
+                                    for tile_path, clin_path, slid_path in cohortlist_DL ]
                                 )
 
             do_experiment(
@@ -178,16 +180,17 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                         get.SimpleRun(),
 
                         cohorts_df=cohorts_df,
-                        target_labels=self.targets_DL,  
+                        target_labels=[str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()],  
                         max_train_tile_num=int(self.max_tile_num_DL),  
                         max_valid_tile_num=128,  #TO DO
                         folds = int(self.kfolds_DL),
-                        valid_frac=self.validratio_DL/100,
+                        valid_frac=int(self.validratio_DL)/100,
+                        na_values=['NA','Not Available', 'Equivocal', 'Not Performed',"unknown","na","Na","nA","NA","x"],
                         balance=True,   
                         #min_support=5,
                         train=Train(
-                            batch_size= int(self.batch_size_DL),
-                            max_epochs=int(self.max_epochs_DL),
+                            batch_size= int(self.ui.batch_size_DL.text()),
+                            max_epochs=int(self.ui.max_epochs_DL.text()),
                             ),
                         ),
                         devices={'cuda:0': 4},
@@ -207,25 +210,30 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 item_text = self.ui.cohortlist_DL.item(item_index).text()  
                 cohortnamelist_DL.append(item_text)
 
-        text = [
+        self.validratio_DL =  str(self.ui.validratio_DL.text())[:-1]
+        print(self.validratio_DL)
+        text = ["",
+                "Saved Data: ",
+                "",
                 "Folder path: " + self.folderpath_DL,
                 "PMT path: " + os.path.basename(self.patmasttab_path_DL),
                 "SMT path: " + os.path.basename(self.slidmasttab_path_DL),
                 "Folder path: " + self.folderpath_DL,
-                "Chosen target(s): " + str([str(x.text()) for x in self.targets_DL]),
-                "Max epochs: " + str(self.max_epochs_DL),
-                "Batch size: " + str(self.batch_size_DL),
-                "Max tile num: " + str(self.max_tile_num_DL),
-                "GPU Num: " +str(self.gpu_num_DL),
-                "Mode: " +str(self.mode_DL),
-                "validation ratio: " +str(self.validratio_DL)+"%",
-                "K-folds: " +str(self.kfolds_DL),
+                "Chosen target(s): " + str([str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()]),
+                "Max epochs: " + str(self.ui.max_epochs_DL.text()),
+                "Batch size: " + str(self.ui.batch_size_DL.text()),
+                "Max tile num: " + str(self.ui.maxTileNum_DL.text()),
+                "GPU Num: " +str(self.ui.GPU_num_DL.text()),
+                "Mode: " +str(self.ui.choosemode_DL.currentText()),
+                "validation ratio: " +str(self.ui.validratio_DL.text()),
+                "K-folds: " +str(self.ui.kfolds_DL.text()),
                 "Tile path: " + self.tilepath_DL,
                 "Cohort list"+ str(cohortlist_DL),
                 "Cohort Name list"+ str(cohortnamelist_DL),
                 "ADVANCED SETTINGS:",
-                "GPU num: " + str(self.advanced_values[0]),
-                "Binarize quantil: " + str(self.advanced_values[1]),
+                "GPU num advanced : " + str(self.advanced_values[0]),
+                "Binarize quantil advanced: " + str(self.advanced_values[1]),
+                "Chosen subgroup: " + str(self.subgroup_values_DL)
                 ]
 
         print(*text, sep='\n')
@@ -238,14 +246,14 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
         
-            try:
-                if self.mode_DL == 'test/train':
+            if True:
+                if self.ui.choosemode_DL.currentText() == 'test/train':
                     self.worker = Worker(execute_traintest) # Any other args, kwargs are passed to the run function
                     # Execute
                     self.threadpool.start(self.worker)
                      
 
-                elif self.mode_DL == 'k-fold cross validation':
+                elif self.ui.choosemode_DL.currentText() == 'k-fold cross validation':
                     self.worker = Worker(execute_Kfold) # Any other args, kwargs are passed to the run function
                     # Execute
                     self.threadpool.start(self.worker)
@@ -253,12 +261,12 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 else:
                     raise ValueError(self.mode_DL)
 
-            except:
+            """except:
                 # if not working raise dialog
                 QtWidgets.QMessageBox.critical(self, "Error","Oh no!  \n Something went wrong ")
 
             finally:
-                print("cont'd")
+                print("cont'd")"""
 
     def resetDL_click(self):
         
@@ -268,7 +276,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.folderpath_DL = " "
         self.tilepath_DL = " "
         self.ui.choosetarg_DL.clear()
-        self.targets_DL = self.ui.choosetarg_DL.selectedItems()
+        self.targets_DL = [str(x.text()) for x in self.ui.choosetarg_DL.selectedItems()]
         self.ui.kfolds_DL.setEnabled(False)
         self.kfolds_DL = self.ui.kfolds_DL.text()
         self.ui.validratio_DL.setEnabled(True)
@@ -277,9 +285,9 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.label_4.setEnabled(True)
         self.ui.max_epochs_DL.setProperty("value", 4)  # hardcoded
         self.max_epochs_DL = self.ui.max_epochs_DL.text()
-        self.ui.batch_size_DL.setProperty("value", 0)  # hardcoded
+        self.ui.batch_size_DL.setProperty("value", 64)  # hardcoded
         self.batch_size_DL = self.ui.batch_size_DL.text()
-        self.ui.maxTileNum_DL.setProperty("value", 0)  # hardcoded
+        self.ui.maxTileNum_DL.setProperty("value", 20)  # hardcoded
         self.max_tile_num_DL = self.ui.maxTileNum_DL.text()
         self.ui.cohortlist_DL.clear()
         self.ui.GPU_num_DL.setProperty("value", 3)  # hardcoded
@@ -342,7 +350,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
               
     def testclick_DL(self):
 
-        project_dir='C:/Users/tseibel/Desktop/test/savepath' 
+        project_dir='C:/Users/tseibel/Desktop/test/savepath2' 
         tiles_path='C:/Users/tseibel/Desktop/test/BLOCKS_NORM_MACENKO'
         clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_CLINI.xlsx'
         slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_SLIDE.xlsx'
@@ -365,7 +373,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     max_train_tile_num=500, # how many tiles from each whole slide image (maximum)
                     min_support=8,    # how many patients are required in each category?
                     valid_frac=.2,    # which fraction of patients is used for validation (early stopping)+
-                    na_values=['NA','Not Available', 'Equivocal', 'Not Performed'],
+                    na_values=['NA','Not Available', 'Equivocal', 'Not Performed',"unknown","na","Na","nA","NA","x"],
                     balance=True,   # weather to balance the training set
                     #min_support=5,
                     train=Train(
@@ -377,7 +385,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     num_concurrent_tasks=0,
                     
                 )
-
+                                                
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Do you want to start the pipeline?")
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
@@ -407,8 +415,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         my_dialog = Cohort_Sets(path)
         execval = my_dialog.exec_()
         if execval == True:
-            self.cohort_values_DL = my_dialog.save_cohort()  # values from dialog window
-            print(self.cohort_values_DL)
+            self.subgroup_values_DL = my_dialog.save_cohort()  # values from dialog window
+            print(self.subgroup_values_DL)
 
 
     ### DEPLOY
@@ -726,6 +734,9 @@ class Cohort_Sets(QtWidgets.QDialog):
         self.ui.and_button.setEnabled(False)
         self.ui.or_button.setEnabled(False)
         self.ui.back_button.setEnabled(False)
+        self.ui.min_label.setEnabled(False)
+        self.ui.max_label.setEnabled(False)
+        self.ui.median_label.setEnabled(False)
 
 
         #Events
@@ -733,7 +744,7 @@ class Cohort_Sets(QtWidgets.QDialog):
         self.ui.back_button.clicked.connect(self.back_clicked)
         self.ui.or_button.clicked.connect(self.or_clicked)
         self.ui.save_button.clicked.connect(self.accept)
-
+        
         self.ui.cancel_button.clicked.connect(self.close)
         self.ui.groups.activated.connect(self.groups_clicked)
         self.ui.subgroups.activated.connect(self.subgroup_clicked)
@@ -741,9 +752,9 @@ class Cohort_Sets(QtWidgets.QDialog):
     def and_clicked(self):
         self.ui.subgroups.clear()
         self.ui.subgroups.setEnabled(False)
-        self.ui.and_button.setEnabled(False)
-        self.ui.or_button.setEnabled(False)
-        self.ui.back_button.setEnabled(False)
+        #self.ui.and_button.setEnabled(False)
+        #self.ui.or_button.setEnabled(False)
+        #self.ui.back_button.setEnabled(False)
         
         self.text.append(self.groupname + self.subgroupname)
         self.text.append(" AND ")
@@ -765,9 +776,9 @@ class Cohort_Sets(QtWidgets.QDialog):
     def or_clicked(self):
         self.ui.subgroups.clear()
         self.ui.subgroups.setEnabled(False)
-        self.ui.and_button.setEnabled(False)
-        self.ui.or_button.setEnabled(False)
-        self.ui.back_button.setEnabled(False)
+        #self.ui.and_button.setEnabled(False)
+        #self.ui.or_button.setEnabled(False)
+        #self.ui.back_button.setEnabled(False)
         
         self.text.append(self.groupname + self.subgroupname)
         self.text.append(" OR ")
@@ -796,32 +807,53 @@ class Cohort_Sets(QtWidgets.QDialog):
 
     def groups_clicked(self):
         print(self.ui.groups.currentText())
-        subgroup_cat = pd.Categorical(self.df[self.ui.groups.currentText()])
+        
 
         
         
+        self.ui.min_label.setEnabled(False)
+        self.ui.max_label.setEnabled(False)
+        self.ui.median_label.setEnabled(False)
         
         self.ui.subgroups.clear()
         self.ui.subgroups.setEnabled(False)
-        self.ui.and_button.setEnabled(True)
-        self.ui.or_button.setEnabled(True)
-        self.ui.back_button.setEnabled(True)
+        #self.ui.and_button.setEnabled(True)
+        #self.ui.or_button.setEnabled(True)
+        #self.ui.back_button.setEnabled(True)
         self.subgroupname = ""
         self.groupname = self.ui.groups.currentText()
         addText = "<span style=\" font-size:8pt; font-weight:400; color:#0000ff;\" >"+self.groupname+"</span>"
         self.ui.querybox.setText(''.join(self.text) + addText  )
-        
         self.ui.querybox.setText(''.join(self.text) + addText  )
-        if len(subgroup_cat.categories)<17:
+
+
+        if self.df[self.ui.groups.currentText()].dtype == float:
+
+            print("float")
+            """
+            min = self.df[self.ui.groups.currentText()].min()
+            max = self.df[self.ui.groups.currentText()].max()
+            median = self.df[self.ui.groups.currentText()].median()
+
+            
+            self.ui.min_label.setEnabled(True)
+            self.ui.max_label.setEnabled(True)
+            self.ui.median_label.setEnabled(True)
+            self.ui.median_label.setText(str(median))
+            self.ui.min_label.setText(str(min))
+            self.ui.max_label.setText(str(max))
+            """
+        else:
+            subgroup_cat = pd.Categorical(self.df[self.ui.groups.currentText()])
             self.ui.subgroups.setEnabled(True)
             self.ui.subgroups.addItem("-no subgrouping-")
             self.ui.subgroups.addItems([str(val) for val in subgroup_cat.categories])
-        
-            
+
+
     def subgroup_clicked(self):
-        self.ui.and_button.setEnabled(True)
-        self.ui.or_button.setEnabled(True)
-        self.ui.back_button.setEnabled(True)
+        #self.ui.and_button.setEnabled(True)
+        #self.ui.or_button.setEnabled(True)
+        #self.ui.back_button.setEnabled(True)
 
         self.subgroupname = "[" + self.ui.subgroups.currentText() + "]"
         
