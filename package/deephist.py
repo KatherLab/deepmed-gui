@@ -711,7 +711,7 @@ class Cohort_Sets(QtWidgets.QDialog):
         self.groupname = ""
         self.subgroupname = ""
        
-        #self.path = 'cliniData/TCGA-BRCA-DX_CLINI.xlsx'
+        self.path = 'cliniData/TCGA-BRCA-DX_CLINI.xlsx'
         try:
             self.df = pd.read_excel(self.path)
             self.ui.groups.setEnabled(True)
@@ -733,6 +733,7 @@ class Cohort_Sets(QtWidgets.QDialog):
         self.ui.back_button.clicked.connect(self.back_clicked)
         self.ui.or_button.clicked.connect(self.or_clicked)
         self.ui.save_button.clicked.connect(self.accept)
+
         self.ui.cancel_button.clicked.connect(self.close)
         self.ui.groups.activated.connect(self.groups_clicked)
         self.ui.subgroups.activated.connect(self.subgroup_clicked)
@@ -777,8 +778,19 @@ class Cohort_Sets(QtWidgets.QDialog):
 
 
     def save_cohort(self):
-         print("Save...")
-         return self.text
+        print(self.groupname)
+        if self.groupname !="":
+            self.text.append(self.groupname + self.subgroupname)
+            self.ui.querybox.setText(''.join(self.text))
+        else:#last item in list is either AND or OR operator
+            
+            self.text=self.text[:-1]
+
+        self.groupname = ""
+        self.subgroupname = ""
+        print("Save...")
+        
+        return self.text
 
     
 
