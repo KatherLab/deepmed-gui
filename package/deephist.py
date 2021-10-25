@@ -25,8 +25,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.patmasttab_path_learn = " "  # path for clini table
         self.folderpath_learn = " "  # path for saving path, where the project should be saved
         self.tilepath_learn = " "  # path for tiles
-        self.advanced_values = [0, 0]  # returned values from advanced settings. TODO advanced settings
-        self.subgroup_values_learn = []  # returned values from subgroups. TODO subgroups
+        self.advanced_values_learn = [3, 10, 100, 50, 0, 4, ['NA', 'Not Available', 'Equivocal', 'Not Performed', 'unknown']]  # HARDCODED returned values from advanced settings. TODO advanced settings
+        self.subgroup_values_learn = ["",""]  # [group,subgroup]
         self.batch_size_learn = self.ui.batch_size_learn.text()  # batch size
         self.max_tile_num_learn = self.ui.maxTileNum_learn.text()  # maximum tile number
         self.max_epochs_learn = self.ui.max_epochs_learn.text()  # maximum epochs
@@ -40,7 +40,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
         # Events  Deep Learn
-        self.ui.advanced_sets_learn.setEnabled(False)  # TODO advanced settings
+        self.ui.advanced_sets_learn.setEnabled(True)  # TODO advanced settings
         self.ui.slide_masttab_learn.clicked.connect(self.open_slidmasttab_learn)
         self.ui.clini_table_learn.clicked.connect(self.open_patmasttab_learn)
         self.ui.savingpath_learn.clicked.connect(self.open_savingpath_learn)
@@ -54,7 +54,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.cohortlist_learn.itemClicked.connect(self.changename_learn)
         self.ui.test_learn.clicked.connect(self.testclick_learn)
         self.ui.stop_learn.clicked.connect(self.stop_clicked_learn)
-        self.ui.cohort_click_learn.clicked.connect(self.subgrouping_clicked_learn)
+        self.ui.cohort_click_learn.clicked.connect(self.subgrouping_clicked_learn)  # TODO subgrouping has to be fixed
         ###########
 
         # Values Deploy
@@ -68,6 +68,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.cohortlist_deploy = []  # list of chosen cohorts, each cohort is a list containing tile, clini , slide path
         self.cohort_name_list_deploy = []  # list of cohort names
         self.targets_deploy = self.ui.targetlabels_deploy.selectedItems()  # targets chosen for deployment
+        self.advanced_values_deploy = [3, 10, 100, 50, 0, 4, ['NA', 'Not Available', 'Equivocal', 'Not Performed', 'unknown']]  # TODO add advanced settings to deploy
 
         # Events Deploy
         self.ui.advanced_deploy.setEnabled(False)  # TODO advanced settings
@@ -114,13 +115,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             print("unknown mode chosen")
 
     def open_slidmasttab_learn(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData")
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', r"/GUI_deephist_python/cliniData")
         if path != ('', ''):
             self.slidmasttab_path_learn = path[0]  # path to slide table
             print(path)
 
     def open_patmasttab_learn(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData", "*.xlsx")
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', r"/GUI_deephist_python/cliniData", "*.xlsx")
 
         if path != ('', ''):
             self.patmasttab_path_learn = path[0]  # path to clini table
@@ -207,7 +208,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             # Getting the data embedded in each item from the listWidget
             item_data = self.ui.cohortlist_learn.item(item_index).data(QtCore.Qt.UserRole)
             cohortlist_learn.append(item_data)
-            # Getting the datatext of each item from the listWidget
+            # Getting the data text of each item from the list Widget
             item_text = self.ui.cohortlist_learn.item(item_index).text()
             cohortnamelist_learn.append(item_text)
 
@@ -285,15 +286,17 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.cohortlist_learn.clear()
         self.ui.GPU_num_learn.setProperty("value", 3)  # TODO reset hardcoded
         self.gpu_num_learn = self.ui.GPU_num_learn.text()
-        self.advanced_values = [0, 0]  # TODO reset hardcoded
+        self.advanced_values_learn = [0, 0]  # TODO reset hardcoded
+
 
     def open_advanced_dialog_learn(self):
         """open advanced settings for Deep Learn"""
-        my_dialog = Advanced_Sets()
+        settings = self.advanced_values_learn  #TODO gives hardcoded settings to advanced settings.
+        my_dialog = Advanced_Sets(settings)
         execval = my_dialog.exec_()
-        if execval is True:
-            self.advanced_values = my_dialog.save_advanced()  # returns values from advanced settings
-        print(f"Advanced settings\n returns {self.advanced_values}")
+        if execval:
+            self.advanced_values_learn = my_dialog.save_advanced()  # returns values from advanced settings
+            print(f"Advanced settings\n returns {self.advanced_values_learn}")
 
     def add_list_clicked_learn(self):
 
@@ -535,8 +538,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         print("reset")
 
     def advanced_deploy_click(self):
-        ...  # TODO add advanced settings to deploy
-
+        """open advanced settings for deploy"""
+        settings = self.advanced_values_deploy  # TODO gives hardcoded settings to advanced settings.
+        my_dialog = Advanced_Sets(settings)
+        execval = my_dialog.exec_()
+        if execval is True:
+            self.advanced_values_deploy = my_dialog.save_advanced()  # returns values from advanced settings
+            print(f"Advanced settings\n returns {self.advanced_values_deploy}")  # TODO add advanced settings to deploy
 
     def add_list_clicked_deploy(self):
 
@@ -660,25 +668,63 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 class Advanced_Sets(QtWidgets.QDialog):
     """"advanced settings dialog for Deep Learn"""
 
-    def __init__(self, parent=None):
+    def __init__(self,settings, parent=None):
         super(Advanced_Sets, self).__init__(parent)
         self.ui = Ui_advanced_settings()
         self.ui.setupUi(self)
+        self.settings = settings
+        # Values
+        self.gpunum = self.settings[0]
+        self.max_epochs = self.settings[1]
+        self.batch_size = self.settings[2]
+        self.max_tile_num = self.settings[3]
+        self.num_workers = self.settings[4]
+        self.concurrent_tasks = self.settings[5]
+        self.na_values = self.settings[6]
 
+        # Events
         self.ui.cancel_advancedDL.clicked.connect(self.close)
         self.ui.save_advancedDL.clicked.connect(self.accept)
         self.ui.reset_advancedDL.clicked.connect(self.reset_advanced)
 
     def save_advanced(self):
         print("Save...")
-        a = str(self.ui.GPUnum.text())
-        b = str(self.ui.binarize_quantile.value())
+        gpunum = self.ui.GPUnum.text()
+        max_epochs =self.ui.max_epochs.text()
+        batch_size = self.ui.batch_size.text()
+        max_tile_num = self.ui.maxTileNum.text()
+        num_workers = self.ui.workers.text()
+        concurrent_tasks = self.ui.conc_tasks.text()
+        na_values = self.ui.na_settings.toPlainText()
+        print(na_values)
+        try:
 
-        return [a, b]
+            na_value_list = na_values[1:-1].replace("\'", "").replace("\"","")
+
+            print(na_value_list)
+            na_value_list = na_value_list.split(",")
+            print(na_value_list)
+
+            na_value_list = [val[1:] if val[0]==" " and len(val)>1 else val for val in na_value_list]
+            print(na_value_list)
+        except:
+            raise "error"
+        else:
+            print("cont'd")
+
+        return [gpunum,max_epochs,batch_size,max_tile_num,max_tile_num,num_workers,concurrent_tasks,na_value_list]
+
 
     def reset_advanced(self):
-        self.ui.GPUnum.setProperty("value", 4)
-        self.ui.binarize_quantile.setProperty("value", 14)
+        self.ui.GPUnum.setProperty("value", self.settings[0])
+
+        self.ui.max_epochs.setProperty("value",self.settings[1])
+        self.ui.batch_size.setProperty("value",self.settings[2])
+        self.ui.maxTileNum.setProperty("value",self.settings[3])
+        self.ui.workers.setProperty("value",self.settings[4])
+        self.ui.conc_tasks.setProperty("value",self.settings[5])
+        self.ui.na_settings.setText(str(self.settings[6]))
+
 
 
 class Cohort_Sets(QtWidgets.QDialog):
@@ -696,7 +742,8 @@ class Cohort_Sets(QtWidgets.QDialog):
         self.subgroupname = ""
         self.min = 0
         self.max = 0
-        self.median = 0
+        self.threshold = 0
+        self.isfloat = True
 
         self.path = r'cliniData/TCGA-BRCA-DX_CLINI.xlsx'
         try:
@@ -764,8 +811,11 @@ class Cohort_Sets(QtWidgets.QDialog):
         self.groupname = ""
         self.subgroupname = ""
         print("Save...")
+        if self.isfloat:
+            return [self.groupname,float(self.threshold)]
+        else:
+            return [self.groupname,self.subgroupname]
 
-        return self.text
 
     def groups_clicked(self):
         print(self.ui.groups.currentText())
@@ -778,20 +828,20 @@ class Cohort_Sets(QtWidgets.QDialog):
         addText = "<span style=\" font-size:14pt; font-weight:400; color:#0000ff;\" >" + self.groupname + "</span>"
         self.ui.querybox.setText(''.join(self.text) + addText)
         self.ui.querybox.setText(''.join(self.text) + addText)
-
-        if self.df[self.ui.groups.currentText()].dtype == float:
+        self.isfloat = self.df[self.ui.groups.currentText()].dtype == float
+        if self.isfloat:
 
             print("float")
             self.enable_widgets(bool_val=True, mode=1)
 
             self.min = self.df[self.ui.groups.currentText()].min()
             self.max = self.df[self.ui.groups.currentText()].max()
-            self.median = self.df[self.ui.groups.currentText()].median()
+            self.threshold = self.df[self.ui.groups.currentText()].median()
             self.ui.min_val.setText(str(self.min))
             self.ui.max_val.setText(str(self.max))
-            self.ui.threshold_value.setText(str(self.median))
+            self.ui.threshold_value.setText(str(self.threshold))
 
-            addText = f" {self.groupname}[ {self.min} < class1 < {self.median}  < class2 < {self.max}] ]"
+            addText = f" {self.groupname}[ {self.min} < class1 < {self.threshold}  < class2 < {self.max}] ]"
             self.ui.querybox.setText(''.join(self.text) + addText)
 
         else:
@@ -811,8 +861,8 @@ class Cohort_Sets(QtWidgets.QDialog):
         self.ui.querybox.setText(''.join(self.text) + addText)
 
     def threshold_changed(self):
-        self.median = self.ui.threshold_value.text()
-        addText = f" {self.groupname}[ {self.min} < class1 < {self.median}  < class2 < {self.max}] ]"
+        self.threshold = self.ui.threshold_value.text()
+        addText = f" {self.groupname}[ {self.min} < class1 < {self.threshold}  < class2 < {self.max}] ]"
         self.ui.querybox.setText(''.join(self.text) + addText)
         print(3)
 
