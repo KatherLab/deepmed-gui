@@ -168,7 +168,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 devices={'cuda:0': 8},  # TODO add workers settings to  advanced settings
                 num_concurrent_tasks=0,  # TODO add concurrent task number to advanced settings
             )
-
+        
+        
         def execute_Kfold_learn():
             """starts Deepmed in k fold crossvalidation mode"""
             cohorts_df = pd.concat([
@@ -227,9 +228,15 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 f"Cohort list: {str(cohortlist_learn)}",
                 f"Cohort Name list {str(cohortnamelist_learn)}",
                 f"\nADVANCED SETTINGS:\n",  # TODO print advanced values
-                f"GPU num advanced : {str(self.advanced_values[0])}",
-                f"Binarize quantil advanced: {str(self.advanced_values[1])}",
-                f"Chosen subgroup: {str(self.subgroup_values_learn)}"  # TODO print chosen subgroups
+                f"GPU num advanced : {str(self.advanced_values_learn[0])}",
+                f"max epochs advanced : {str(self.advanced_values_learn[1])}",
+                f"batch size advanced : {str(self.advanced_values_learn[2])}",
+                f"max tile num advanced: {str(self.advanced_values_learn[3])}",
+                f"num workers advanced: {str(self.advanced_values_learn[4])}",
+                f"concurrent tasks advanced: {str(self.advanced_values_learn[5])}",
+                f"exclude values advanced: {str(self.advanced_values_learn[6])}",
+                f"Chosen subgroup: {str(self.subgroup_values_learn)}"  # TODO print chosen subgroups,
+               
                 ]
 
         print(*text, sep='\n')
@@ -712,7 +719,7 @@ class Advanced_Sets(QtWidgets.QDialog):
         else:
             print("cont'd")
 
-        return [gpunum,max_epochs,batch_size,max_tile_num,max_tile_num,num_workers,concurrent_tasks,na_value_list]
+        return [gpunum,max_epochs,batch_size,max_tile_num,num_workers,concurrent_tasks,na_value_list]
 
 
     def reset_advanced(self):
