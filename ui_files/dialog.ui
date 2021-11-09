@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>advanced_settings</class>
+ <widget class="QDialog" name="advanced_settings">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>advanced_settings</string>
+  </property>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
