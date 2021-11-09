@@ -98,7 +98,7 @@ class Ui_advanced_settings(object):
 
     def retranslateUi(self, advanced_settings):
         _translate = QtCore.QCoreApplication.translate
-        advanced_settings.setWindowTitle(_translate("advanced_settings", "Dialog"))
+        advanced_settings.setWindowTitle(_translate("advanced_settings", "Advanced Settings"))
         self.label_4.setText(_translate("advanced_settings", "max tile num "))
         self.label.setText(_translate("advanced_settings", "Advanced Settings"))
         self.label_3.setText(_translate("advanced_settings", "Number of GPUs"))

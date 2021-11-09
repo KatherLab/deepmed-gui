@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Cohort Subgrouping</string>
+   <string>Cohort Train on Subgroup</string>
   </property>
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">

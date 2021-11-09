@@ -117,7 +117,7 @@ class Ui_cohort_settings(object):
 
     def retranslateUi(self, cohort_settings):
         _translate = QtCore.QCoreApplication.translate
-        cohort_settings.setWindowTitle(_translate("cohort_settings", "Cohort Subgrouping"))
+        cohort_settings.setWindowTitle(_translate("cohort_settings", "Cohort Train on Subgroup"))
         self.label_3.setText(_translate("cohort_settings", "Querybox"))
         self.or_button.setText(_translate("cohort_settings", "or"))
         self.and_button.setText(_translate("cohort_settings", "and"))
