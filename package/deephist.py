@@ -281,7 +281,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.label_5.setEnabled(False)
         self.ui.label_4.setEnabled(True)
         self.advanced_values_learn = 0
-
+        self.ui.cohortlist_learn.clear()
+        
         #self.ui.max_epochs_learn.setProperty("value", 4)  # TODO reset hardcoded
         #self.max_epochs_learn = self.ui.max_epochs_learn.text()
         #self.ui.batch_size_learn.setProperty("value", 64)  # TODO reset hardcoded
@@ -347,7 +348,9 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         """when a single cohort is clicked, will show a window containing the paths and the name.
          Cohort can be deleted. """
         item_index = self.ui.cohortlist_learn.currentRow()
+        self.clicked_cohort_learn = self.ui.cohortlist_learn.item(item_index).text()
         t1, t2, t3 = self.ui.cohortlist_learn.item(item_index).data(QtCore.Qt.UserRole)
+
         t1 = f"tile path: {str(t1)}"
         t2 = f"PMT path: {str(t2)}"
         t3 = f"SMT path: {str(t3)}"
@@ -496,7 +499,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 path[0])
 
 
-            #print(learner.dls.tfms[1][0]) # TODO not working yet. 
+            #print(learner.dls.tfms[1][0]) # TODO not working yet.
 
 
 
