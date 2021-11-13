@@ -147,7 +147,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def run_click_learn(self):
 
-        def execute_traintest():
+        def execute_traintest_learn():
             """starts Deepmed in train/test mode"""
             do_experiment(
                 project_dir=self.folderpath_learn,
@@ -158,17 +158,16 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                         for tile_path, clin_path, slid_path in cohortlist_learn]
                     ),
                     target_labels=[str(x.text()) for x in self.ui.choosetarg_learn.selectedItems()],
-                    resample_each_epoch=True,
-                    valid_frac=int(self.validratio_learn) / 100,
-                    na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', "unknown", "na", "Na", "nA", "NA",
-                               "x"],  # TODO add na_values to advanced settings
+                    resample_each_epoch=True,# TODO resample_epoch still hardcoded
+                    valid_frac=int(str(self.ui.validratio_learn.text())[:-1]) / 100,
+                    na_values=str(self.na_values_learn),  # TODO add na_values to advanced settings
                     ),
                 train=Train(
-                    batch_size=int(self.ui.batch_size_learn.text()),
-                    max_epochs=int(self.ui.max_epochs_learn.text()),
+                    batch_size=int(str(self.batch_size_learn)),
+                    max_epochs=int(str(self.max_epochs_learn)),
                     ),
-                devices={'cuda:0': 8},  # TODO add workers settings to  advanced settings
-                num_concurrent_tasks=0,  # TODO add concurrent task number to advanced settings
+                devices={'cuda:0': int(self.num_workers_learn)}, 
+                num_concurrent_tasks=int(self.concurrent_tasks_learn),
             )
 
         def execute_Kfold_learn():
@@ -187,20 +186,17 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     cohorts_df=cohorts_df,
                     target_labels=[str(x.text()) for x in self.ui.choosetarg_learn.selectedItems()],
                     max_train_tile_num=int(self.max_tile_num_learn),
-                    max_valid_tile_num=128,  # TO DO
-                    folds=int(self.kfolds_learn),
-                    valid_frac=int(self.validratio_learn) / 100,
-                    na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', "unknown", "na", "Na", "nA", "NA",
-                               "x"],  #
-                    balance=True,
+                    folds=int(str(self.ui.kfolds_learn.text())),
+                    na_values=str(self.na_values_learn),  #
+                    balance=True,  # TODO add balance
                     # min_support=5,
                     train=Train(
-                        batch_size=int(self.ui.batch_size_learn.text()),
-                        max_epochs=int(self.ui.max_epochs_learn.text()),
+                        batch_size=int(str(self.batch_size_learn)),
+                        max_epochs=int(str(self.max_epochs_learn)),
                     ),
                 ),
-                devices={'cuda:0': 4},
-                num_concurrent_tasks=0,
+                devices={'cuda:0': int(self.num_workers_learn)},
+                num_concurrent_tasks=int(self.concurrent_tasks_learn),
             )
 
         # Looping through items
@@ -219,7 +215,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 f"\n Saved Data:\n",
                 f"Folder path: {self.folderpath_learn}",
                 f"Chosen target(s): {str([str(x.text()) for x in self.ui.choosetarg_learn.selectedItems()])}",
-
                 f"Mode: {str(self.ui.choosemode_learn.currentText())}",
                 f"validation ratio: {str(self.ui.validratio_learn.text())[:-1]}",
                 f"K-folds: {str(self.ui.kfolds_learn.text())}",
@@ -232,7 +227,9 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 f"Max tile num: {str(self.max_tile_num_learn)}",
                 f"GPU Num: {str(self.gpu_num_learn)}",
                 f"na Values: {str(self.na_values_learn)}",
-                f"Chosen subgroup: {str(self.subgroup_values_learn)}"  # TODO print chosen subgroups
+                f"Chosen subgroup: {str(self.subgroup_values_learn)}",  # TODO print chosen subgroups
+                f"Number of Workers : {self.num_workers_learn}",
+                f"concurrent tasks : {self.concurrent_tasks_learn}",   
                 ]
 
         print(*text, sep='\n')
@@ -247,12 +244,12 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
             if True:  # TODO if everything is running, change to try, return specific error in except
                 if self.ui.choosemode_learn.currentText() == 'test/train':
-                    self.worker = Worker(execute_traintest)  # Any other args, kwargs are passed to the run function
+                    self.worker = Worker(execute_traintest_learn)  # Any other args, kwargs are passed to the run function
                     # Execute
                     self.threadpool.start(self.worker)
 
                 elif self.ui.choosemode_learn.currentText() == 'k-fold cross validation':
-                    self.worker = Worker(execute_Kfold)  # Any other args, kwargs are passed to the run function
+                    self.worker = Worker(execute_Kfold_learn)  # Any other args, kwargs are passed to the run function
                     # Execute
                     self.threadpool.start(self.worker)
 
@@ -281,8 +278,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.label_5.setEnabled(False)
         self.ui.label_4.setEnabled(True)
         self.advanced_values_learn = 0
-        self.ui.cohortlist_learn.clear()
-        
+
         #self.ui.max_epochs_learn.setProperty("value", 4)  # TODO reset hardcoded
         #self.max_epochs_learn = self.ui.max_epochs_learn.text()
         #self.ui.batch_size_learn.setProperty("value", 64)  # TODO reset hardcoded
@@ -348,9 +344,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         """when a single cohort is clicked, will show a window containing the paths and the name.
          Cohort can be deleted. """
         item_index = self.ui.cohortlist_learn.currentRow()
-        self.clicked_cohort_learn = self.ui.cohortlist_learn.item(item_index).text()
         t1, t2, t3 = self.ui.cohortlist_learn.item(item_index).data(QtCore.Qt.UserRole)
-
         t1 = f"tile path: {str(t1)}"
         t2 = f"PMT path: {str(t2)}"
         t3 = f"SMT path: {str(t3)}"
@@ -409,12 +403,14 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         returnValue = msgBox.exec()
         if returnValue == QtWidgets.QMessageBox.Ok:
+            """
             self.ui.stop_learn.setEnabled(True)
             print('OK clicked')
             self.worker = Worker(Execute_test)  # Any other args, kwargs are passed to the run function
             # Execute
             self.threadpool.start(self.worker)
-
+            """
+            Execute_test()
     def stop_clicked_learn(self):
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Do you want to stop the pipeline?\n Progress will be lost.")
@@ -499,7 +495,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 path[0])
 
 
-            #print(learner.dls.tfms[1][0]) # TODO not working yet.
+            #print(learner.dls.tfms[1][0]) # TODO not working yet. 
 
 
 
@@ -646,8 +642,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def testclick_deploy(self):
 
-        project_dir = 'C:/Users/tseibel/Desktop/test/testbuttonbenchmark'
-
+        project_dir = 'C:/Users/tseibel/Desktop/savepath1'
+        model_dir = 'C:/Users/tseibel/Desktop/test/savepath2'
         def Execute_test():
             do_experiment(
                 project_dir=project_dir,
@@ -659,19 +655,24 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                         slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx'),
                     target_labels=['ER Status By IHC', 'Cancer Type Detailed', 'Neoplasm Histologic Type Name',
                                    'Fraction Genome Altered'],
-                    na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed'],
-
+                    
+                    max_train_tile_num=500, # how many tiles from each whole slide image (maximum)
+                    min_support=8,    # how many patients are required in each category?
+                    valid_frac=.2,    # which fraction of patients is used for validation (early stopping)+
+                    # now define all the values which will be excluded (set to missing)
+                    na_values=['NA','Not Available', 'Equivocal', 'Not Performed'],
                     balance=True,  # weather to balance the training set
                     # min_support=5,
-                    evaluators=[Grouped(auroc), Grouped(p_value)],
+                    evaluators=[TopTiles(), Grouped(auroc), Grouped(Roc), Grouped(count), Grouped(p_value)],
 
                     multi_target_evaluators=[AggregateStats(label='target')],
                     train=Load(
-                        project_dir=self.project_dir_deploy,
-                        training_project_dir=self.model_path_deploy),
+                        project_dir= project_dir,
+                        training_project_dir=model_dir),
                 ),
 
             )
+
 
         def Execute_test2():
             project_dir2 = 'C:/Users/tseibel/Desktop/test/savepath1'
@@ -703,7 +704,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         returnValue = msgBox.exec()
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
-            self.worker = Worker(Execute_test2)  # Any other args, kwargs are passed to the run function
+            self.worker = Worker(Execute_test)  # Any other args, kwargs are passed to the run function
             # Execute
             self.threadpool.start(self.worker)
 
@@ -789,16 +790,23 @@ class Add_Targs(QtWidgets.QDialog):
     '''add targets dialog in DL '''
 
     def __init__(self,clinitab,parent=None):
+
         super(Add_Targs, self).__init__(parent)
         self.ui = Ui_add_target()
         self.ui.setupUi(self)
         self.clinitab = clinitab
-        self.clinitab =  r'cliniData/TCGA-BRCA-DX_CLINI.xlsx'
-        self.df = pd.read_excel(self.clinitab)
-
-        self.ui.groups.setEnabled(True)
-        self.ui.groups.clear()
-        self.ui.groups.addItems(list(self.df))  # adds feature names to target list
+        
+        #self.clinitab =  r'cliniData/TCGA-BRCA-DX_CLINI.xlsx'
+        try:
+            self.df = pd.read_excel(self.clinitab)
+            self.ui.groups.setEnabled(True)
+            self.ui.groups.clear()
+            self.ui.groups.addItems(list(self.df))  # adds feature names to target list
+        except (ValueError, Exception):
+            QtWidgets.QMessageBox.critical(self, "Error", "problem with the   \n clinitable ")
+            self.close
+        finally:
+            print("cont'd")
 
         self.ui.groups.currentIndexChanged.connect(self.groups_clicked)
         self.ui.save_button.clicked.connect(self.accept)
@@ -848,16 +856,17 @@ class Cohort_Sets(QtWidgets.QDialog):
         self.max = 0
         self.threshold = 0
         self.isfloat = True
-
-        self.path = r'cliniData/TCGA-BRCA-DX_CLINI.xlsx'
+        self.path = path
+        #self.path = r'cliniData/TCGA-BRCA-DX_CLINI.xlsx'
         try:
             self.df = pd.read_excel(self.path)
             self.ui.groups.setEnabled(True)
             self.ui.groups.clear()
             self.ui.groups.addItems(list(self.df))
         except (ValueError, Exception):
+            self.closeEvent
             QtWidgets.QMessageBox.critical(self, "Error", "problem with the   \n clinitable ")
-
+            
         finally:
             print("cont'd")
 
