@@ -8,11 +8,11 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-class Ui_add_target(object):
-    def setupUi(self, Ui_add_target):
-        Ui_add_target.setObjectName("Ui_add_target")
-        Ui_add_target.resize(375, 401)
-        self.verticalLayoutWidget = QtWidgets.QWidget(Ui_add_target)
+class Ui_Ui_add_target(object):
+    def setupUi(self, add_target):
+        add_target.setObjectName("add_target")
+        add_target.setGeometry(QtCore.QRect(0, 0, 375, 401))
+        self.verticalLayoutWidget = QtWidgets.QWidget(add_target)
         self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 354, 381))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
@@ -79,12 +79,12 @@ class Ui_add_target(object):
         self.gridLayout.addWidget(self.newname, 11, 2, 1, 3)
         self.verticalLayout.addLayout(self.gridLayout)
 
-        self.retranslateUi(Ui_add_target)
-        QtCore.QMetaObject.connectSlotsByName(Ui_add_target)
+        self.retranslateUi(add_target)
+        QtCore.QMetaObject.connectSlotsByName(add_target)
 
-    def retranslateUi(self, Ui_add_target):
+    def retranslateUi(self, add_target):
         _translate = QtCore.QCoreApplication.translate
-        Ui_add_target.setWindowTitle(_translate("Ui_add_target", "Add Target"))
+        add_target.setWindowTitle(_translate("Ui_add_target", "Add Target"))
         self.min_val.setText(_translate("Ui_add_target", "-"))
         self.threshold_label.setText(_translate("Ui_add_target", "threshold:"))
         self.cancel_button.setText(_translate("Ui_add_target", "Cancel"))
@@ -101,9 +101,9 @@ class Ui_add_target(object):
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    Ui_add_target = QtWidgets.QDialog()
+    add_target = QtWidgets.QDialog()
     ui = Ui_Ui_add_target()
-    ui.setupUi(Ui_add_target)
-    Ui_add_target.show()
+    ui.setupUi(add_target)
+    add_target.show()
     sys.exit(app.exec_())
 

@@ -1,11 +1,14 @@
 import sys
 from PyQt5 import QtWidgets, QtCore
+
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtCore import pyqtSlot
 from package.mainwindow import Ui_gui_histo_main
 from package.advanced_settings import Ui_advanced_settings
 from package.cohort_window import Ui_cohort_settings
 from package.add_target import Ui_add_target
+import pathlib
+from datetime import time
 from fastai.vision.all import *
 
 import os
@@ -38,6 +41,10 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.kfolds_learn = self.ui.kfolds_learn.text()  # number of folds
         self.targets_learn = self.ui.choosetarg_learn.selectedItems()  # chosen targets
 
+
+
+
+
         self.threadpool = QtCore.QThreadPool()  # get number of threads
         print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
@@ -54,9 +61,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.del_list_learn.clicked.connect(self.delete_list_clicked_learn)
         self.ui.cohortlist_learn.itemClicked.connect(self.changename_learn)
         self.ui.test_learn.clicked.connect(self.testclick_learn)
-        self.ui.stop_learn.clicked.connect(self.stop_clicked_learn)
-        self.ui.cohort_click_learn.clicked.connect(self.subgrouping_clicked_learn)  # TODO subgrouping has to be fixed
+
+        self.ui.train_subset_learn.clicked.connect(self.subgrouping_clicked_learn)
         self.ui.add_target_learn.clicked.connect(self.add_target_clicked_learn)
+        self.ui.checkTarget_learn.clicked.connect(self.click_checkTarget_learn)
+        self.ui.checkSubset_learn.clicked.connect(self.click_checkSubset_learn)
+
+
         ###########
 
         # Values Deploy
@@ -72,6 +83,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.targets_deploy = self.ui.targetlabels_deploy.selectedItems()  # targets chosen for deployment
         self.advanced_values_deploy = [3, 10, 100, 50, 0, 4, ['NA', 'Not Available', 'Equivocal', 'Not Performed', 'unknown']]  # TODO add advanced settings to deploy
 
+        #self.loader()
+
         # Events Deploy
         self.ui.advanced_deploy.setEnabled(False)  # TODO advanced settings
         self.ui.projectdir_deploy.clicked.connect(self.open_project_dir_deploy)
@@ -86,6 +99,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.del_list_deploy.clicked.connect(self.delete_list_clicked_deploy)
         self.ui.cohortlist_deploy.itemClicked.connect(self.changename_deploy)
         self.ui.test_deploy.clicked.connect(self.testclick_deploy)
+        self.ui.check_Subset_deploy.clicked.connect(self.click_checkSubset_deploy)
+        self.ui.savingpath_deploy.clicked.connect(self.open_savingpath_deploy)
         ###########
 
         # Values Visualize
@@ -94,6 +109,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.nextIm_vis.clicked.connect(self.count_up_vis)
         self.ui.prevIm_vis.clicked.connect(self.count_down_vis)
         ###########
+
+
 
     def mode_chosen_learn(self):
         #  disable all mode settings
@@ -242,6 +259,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
 
+            logfilename = f'./logfiles_gui/learn{datetime.now().hour}_{datetime.now().minute}_{datetime.now().second}.txt'
+            print(logfilename)
+            f = open(logfilename,'w+')
+            for line in text:
+                f.write(line+'\n')
+            f.close()
+
             if True:  # TODO if everything is running, change to try, return specific error in except
                 if self.ui.choosemode_learn.currentText() == 'test/train':
                     self.worker = Worker(execute_traintest_learn)  # Any other args, kwargs are passed to the run function
@@ -332,7 +356,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsEnabled)
 
-            # Setting your QListWidgetItem Data  
+            # Setting your QListWidgetItem Data
+
             item.setData(QtCore.Qt.UserRole, data)  # connects the paths to the given cohort
 
             self.ui.cohortlist_learn.addItem(item)
@@ -348,7 +373,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         t1 = f"tile path: {str(t1)}"
         t2 = f"PMT path: {str(t2)}"
         t3 = f"SMT path: {str(t3)}"
-        text = f"Cohort: {str(self.clicked_cohort_learn)}\n\n{t1}\n\n{t2}\n\n{t3}"
+        text = f"Cohort: {str(self.ui.cohortlist_learn.item(item_index).text())}\n\n{t1}\n\n{t2}\n\n{t3}" # TODO broken somehow
 
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText(text)
@@ -451,11 +476,38 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     return None
 
 
+    def click_checkTarget_learn(self):
+        self.ui.add_target_learn.setEnabled(self.ui.checkTarget_learn.checkState())
+
+    def click_checkSubset_learn(self):
+        self.ui.train_subset_learn.setEnabled(self.ui.checkSubset_learn.checkState())
+
+    def open_savingpath_deploy(self):
+        path = QtWidgets.QFileDialog.getExistingDirectory(self, r"\home")
+        if path != ('', ''):
+            self.folderpath_learn = path  # saving path
 
     def open_project_dir_deploy(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, r"\home")
         if path != ('', ''):
             self.project_dir_deploy = path
+
+        self.ui.targetlabels_deploy.clear()
+        plt = platform.system()  # to fix probems between different platforms
+        if plt == 'Darwin':
+            pathlib.WindowsPath = pathlib.PosixPath
+        print(f"plattform is {plt}")
+
+
+        for root, dirs, files in os.walk(path, topdown=False):
+            for name in files:
+                pat = os.path.join(root, name).split('/')
+                if pat[-1] == 'export.pkl':
+                    data = os.path.join(root, name)
+                    item = QtWidgets.QListWidgetItem('_'.join(pat[-3:-1]))
+                    item.setData(QtCore.Qt.UserRole, data)
+
+                    self.ui.targetlabels_deploy.addItem(item)
 
     def open_patmasttab_deploy(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', r"/GUI_deephist_python/cliniData", "*.xlsx")
@@ -487,17 +539,28 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def open_model_path_deploy(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', r"/GUI_deephist_python/models", "*.pkl")
+
         if path != ('', ''):
             self.model_path_deploy = path[0]
             print(path[0])
 
-            learner = load_learner(
-                path[0])
+        plt = platform.system()  # to fix probems between different platforms
+        if plt == 'Darwin':
+            pathlib.WindowsPath = pathlib.PosixPath
+        print(f"plattform is {plt}")
+        try:
+            learner = load_learner(path[0])
+            print(learner.dls.tfms[1][0].cols[0]) # TODO not working yet.
+            data = path[0]
+            item = QtWidgets.QListWidgetItem(learner.dls.tfms[1][0].cols[0])
+            item.setData(QtCore.Qt.UserRole, data)
+            self.ui.targetlabels_deploy.addItem(item)
+        except (ValueError, Exception):
+            # if not working raise dialog
+            QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")
 
-
-            #print(learner.dls.tfms[1][0]) # TODO not working yet. 
-
-
+        finally:
+            print("cont'd")
 
     def run_deploy_click(self):
 
@@ -574,16 +637,19 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 print("cont'd")
 
     def reset_deploy_click(self):
-        self.cohort_path_deploy = ""
+        self.slidmasttab_path_deploy = " "
+        self.patmasttab_path_deploy = " "
         self.choose_tile_dir_deploy = ""
+        self.cohort_path_deploy = ""
+
         self.model_path_deploy = ""
         self.project_dir_deploy = ""
         self.ui.targetlabels_deploy.clear()
-        self.ui.targetlabels2_deploy.clear()
-        self.ui.batchsize_deploy.setProperty("value", 64)  # hardcoded
+
         self.cohortlist_deploy = []
         self.cohort_name_list_deploy = []
         print("reset")
+
 
     def advanced_deploy_click(self):
         """open advanced settings for deploy"""
@@ -707,6 +773,9 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.worker = Worker(Execute_test)  # Any other args, kwargs are passed to the run function
             # Execute
             self.threadpool.start(self.worker)
+
+    def click_checkSubset_deploy(self):
+        self.ui.deploy_subset.setEnabled(self.ui.check_Subset_deploy.checkState())
 
     def count_up_vis(self):
         n = self.ui.imgcounter_vis.intValue()
