@@ -6,7 +6,7 @@ from PyQt5.QtCore import pyqtSlot
 from package.mainwindow import Ui_gui_histo_main
 from package.advanced_settings import Ui_advanced_settings
 from package.cohort_window import Ui_cohort_settings
-from package.add_target import Ui_add_target
+from package.add_target import Ui_Ui_add_target
 import pathlib
 from datetime import time
 from fastai.vision.all import *
@@ -77,7 +77,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.model_path_deploy = ""  # path for the model
         self.slidmasttab_path_deploy = ""  # path for slide table
         self.patmasttab_path_deploy = " "  # path for clini table
-        self.choose_tile_dir_deploy = ""  # empty values
+        self.choose_tiledir_deploy = ""  # empty values
+
         self.cohortlist_deploy = []  # list of chosen cohorts, each cohort is a list containing tile, clini , slide path
         self.cohort_name_list_deploy = []  # list of cohort names
         self.targets_deploy = self.ui.targetlabels_deploy.selectedItems()  # targets chosen for deployment
@@ -101,6 +102,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.test_deploy.clicked.connect(self.testclick_deploy)
         self.ui.check_Subset_deploy.clicked.connect(self.click_checkSubset_deploy)
         self.ui.savingpath_deploy.clicked.connect(self.open_savingpath_deploy)
+        self.ui.add_eval_deploy.clicked.connect(self.add_eval_clicked_deploy)
+        self.ui.del_eval_list_deploy.clicked.connect(self.del_list_clicked_deploy)
         ###########
 
         # Values Visualize
@@ -229,7 +232,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
         self.get_adv_settings()  # actualize advanced settings
         text = [
-                f"\n Saved Data:\n",
+                f"\n Learn Data:\n",
                 f"Folder path: {self.folderpath_learn}",
                 f"Chosen target(s): {str([str(x.text()) for x in self.ui.choosetarg_learn.selectedItems()])}",
                 f"Mode: {str(self.ui.choosemode_learn.currentText())}",
@@ -436,6 +439,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.threadpool.start(self.worker)
             """
             Execute_test()
+
     def stop_clicked_learn(self):
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Do you want to stop the pipeline?\n Progress will be lost.")
@@ -482,10 +486,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
     def click_checkSubset_learn(self):
         self.ui.train_subset_learn.setEnabled(self.ui.checkSubset_learn.checkState())
 
-    def open_savingpath_deploy(self):
-        path = QtWidgets.QFileDialog.getExistingDirectory(self, r"\home")
-        if path != ('', ''):
-            self.folderpath_learn = path  # saving path
+
 
     def open_project_dir_deploy(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, r"\home")
@@ -508,34 +509,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     item.setData(QtCore.Qt.UserRole, data)
 
                     self.ui.targetlabels_deploy.addItem(item)
-
-    def open_patmasttab_deploy(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', r"/GUI_deephist_python/cliniData", "*.xlsx")
-
-        if path != ('', ''):
-            self.patmasttab_path_deploy = path[0]
-
-        if path[0] != "":
-            df = pd.read_excel(path[0])
-            print(list(df))
-            self.ui.targetlabels_deploy.setEnabled(True)
-            self.ui.targetlabels_deploy.clear()
-            self.ui.targetlabels_deploy.addItems(list(df))
-
-            self.ui.targetlabels2_deploy.setEnabled(True)
-            self.ui.targetlabels2_deploy.clear()
-            self.ui.targetlabels2_deploy.addItems(list(df))
-
-    def open_slidmasttab_deploy(self):
-        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData")
-        if path != ('', ''):
-            self.slidmasttab_path_deploy = path[0]
-            print(path)
-
-    def open_tile_dir_deploy(self):
-        path = QtWidgets.QFileDialog.getExistingDirectory(self, r"\home")
-        if path != ('', ''):
-            self.choose_tiledir_deploy = path
 
     def open_model_path_deploy(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', r"/GUI_deephist_python/models", "*.pkl")
@@ -562,6 +535,36 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         finally:
             print("cont'd")
 
+    def open_savingpath_deploy(self):
+        path = QtWidgets.QFileDialog.getExistingDirectory(self, r"\home")
+        if path != ('', ''):
+            self.folderpath_learn = path  # saving path
+
+
+    def open_patmasttab_deploy(self):
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', r"/GUI_deephist_python/cliniData", "*.xlsx")
+
+        if path != ('', ''):
+            self.patmasttab_path_deploy = path[0]
+
+        if path[0] != "":
+            df = pd.read_excel(path[0])
+            print(list(df))#TODO check if chosen model is applicabale with dataset
+
+
+
+    def open_slidmasttab_deploy(self):
+        path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData")
+        if path != ('', ''):
+            self.slidmasttab_path_deploy = path[0]
+            print(path)
+
+    def open_tile_dir_deploy(self):
+        path = QtWidgets.QFileDialog.getExistingDirectory(self, r"\home")
+        if path != ('', ''):
+            self.choose_tiledir_deploy = path
+
+
     def run_deploy_click(self):
 
         def execute_deploy():
@@ -586,9 +589,9 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 multi_target_evaluators=[AggregateStats(label='target', over=['fold'])],
             )
 
+
         cohortnamelist_deploy = []
         cohortlist_deploy = []
-
         # Looping through items
         for item_index in range(self.ui.cohortlist_deploy.count()):
             # Getting the data embedded in each item from the listWidget
@@ -598,24 +601,32 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             item_text = self.ui.cohortlist_deploy.item(item_index).text()
             cohortnamelist_deploy.append(item_text)
 
+        modellist = [self.ui.targetlabels_deploy.item(idx).text() for idx in range(self.ui.targetlabels_deploy.count())]
+
+        evaluators = [self.ui.evaluator_list_deploy.item(idx).text() for idx in range(self.ui.evaluator_list_deploy.count()) ]
+
         print("run")
 
-
-
-
-        text = ["Project dir: " + str(self.project_dir_deploy),
-                "batch size: " + str(self.batch_size_deploy),
-                "max tile num: " + str(self.max_tile_num_deploy),
-                "SMT path: " + os.path.basename(self.slidmasttab_path_deploy),
-                "PMT path: " + os.path.basename(self.patmasttab_path_deploy),
-                "tile directory: " + str(self.choose_tile_dir_deploy),
-                "model path: " + str(self.model_path_deploy),
-                "target evaluator" + str("yes"),
-                "chosen groups: " + str([str(x.text()) for x in self.ui.targetlabels_deploy.selectedItems()]),
-
-                "cohortlists:" + str(cohortlist_deploy),
-                "cohort name list" + str(cohortnamelist_deploy),
+        text = [f"\n Deploy Data:\n",
+                f"Project dir: {str(self.project_dir_deploy)}",
+                f"(last) model path: {self.model_path_deploy }",
+                f"saving path: {self.folderpath_learn }",
+                f"choosen models: {modellist }",
+                f"cohort list: {cohortlist_deploy}",
+                f"cohort names: {cohortnamelist_deploy}",
+                f"evaluator list: {evaluators}",
+                f"\nADVANCED SETTINGS:\n",  #
+                f"Max epochs: {str(self.max_epochs_learn)}",
+                f"Batch size: {str(self.batch_size_learn)}",
+                f"Max tile num: {str(self.max_tile_num_learn)}",
+                f"GPU Num: {str(self.gpu_num_learn)}",
+                f"na Values: {str(self.na_values_learn)}",
+                f"Chosen subgroup: {str(self.subgroup_values_learn)}",  # TODO print chosen subgroups
+                f"Number of Workers : {self.num_workers_learn}",
+                f"concurrent tasks : {self.concurrent_tasks_learn}",
                 ]
+
+
         print(*text, sep='\n')
 
         msgBox = QtWidgets.QMessageBox()
@@ -680,7 +691,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsEnabled)
 
-            # Setting your QListWidgetItem Data  
+            # Setting your QListWidgetItem Data
+
             item.setData(QtCore.Qt.UserRole, data)
 
             self.ui.cohortlist_deploy.addItem(item)
@@ -705,6 +717,26 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if deleteButton == msgBox.clickedButton():
             print("delete cohort")
             self.ui.cohortlist_deploy.takeItem(self.ui.cohortlist_deploy.currentRow())
+
+    def add_eval_clicked_deploy(self):
+        #self.ui.evaluator_list_deploy.
+        eval = self.ui.evaluators_deploy.currentText()
+        groupby = self.ui.group_evaluators_deploy.currentText()
+        if groupby =='no grouping':
+            item = QtWidgets.QListWidgetItem(f"{eval}")
+            data = [eval,'']
+            item.setData(QtCore.Qt.UserRole, data)
+            self.ui.evaluator_list_deploy.addItem(item)
+        else:
+            item = QtWidgets.QListWidgetItem(f"Grouped({eval}, by= {groupby})")
+            data = [eval, groupby]
+            item.setData(QtCore.Qt.UserRole, data)
+            self.ui.evaluator_list_deploy.addItem(item)
+
+
+
+    def del_list_clicked_deploy(self):
+        self.ui.evaluator_list_deploy.clear()
 
     def testclick_deploy(self):
 
@@ -861,7 +893,7 @@ class Add_Targs(QtWidgets.QDialog):
     def __init__(self,clinitab,parent=None):
 
         super(Add_Targs, self).__init__(parent)
-        self.ui = Ui_add_target()
+        self.ui = Ui_Ui_add_target()
         self.ui.setupUi(self)
         self.clinitab = clinitab
         
