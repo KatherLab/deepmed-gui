@@ -78,23 +78,23 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.slidmasttab_path_deploy = ""  # path for slide table
         self.patmasttab_path_deploy = " "  # path for clini table
         self.choose_tiledir_deploy = ""  # empty values
-
+        self.current_modelpath = ""
         self.cohortlist_deploy = []  # list of chosen cohorts, each cohort is a list containing tile, clini , slide path
         self.cohort_name_list_deploy = []  # list of cohort names
         self.targets_deploy = self.ui.targetlabels_deploy.selectedItems()  # targets chosen for deployment
         self.advanced_values_deploy = [3, 10, 100, 50, 0, 4, ['NA', 'Not Available', 'Equivocal', 'Not Performed', 'unknown']]  # TODO add advanced settings to deploy
-
+        self.savingpath_deploy = ""
         #self.loader()
 
         # Events Deploy
-        self.ui.advanced_deploy.setEnabled(False)  # TODO advanced settings
+
         self.ui.projectdir_deploy.clicked.connect(self.open_project_dir_deploy)
         self.ui.choose_slidetable_deploy.clicked.connect(self.open_slidmasttab_deploy)
         self.ui.choose_tiledir_deploy.clicked.connect(self.open_tile_dir_deploy)
         self.ui.choose_model_deploy.clicked.connect(self.open_model_path_deploy)
         self.ui.run_deploy.clicked.connect(self.run_deploy_click)
         self.ui.reset_deploy.clicked.connect(self.reset_deploy_click)
-        self.ui.advanced_deploy.clicked.connect(self.advanced_deploy_click)
+        self.ui.advanced_deploy.clicked.connect(self.open_advanced_dialog_learn)
         self.ui.clini_table_deploy.clicked.connect(self.open_patmasttab_deploy)
         self.ui.addlist_deploy.clicked.connect(self.add_list_clicked_deploy)
         self.ui.del_list_deploy.clicked.connect(self.delete_list_clicked_deploy)
@@ -249,7 +249,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 f"na Values: {str(self.na_values_learn)}",
                 f"Chosen subgroup: {str(self.subgroup_values_learn)}",  # TODO print chosen subgroups
                 f"Number of Workers : {self.num_workers_learn}",
-                f"concurrent tasks : {self.concurrent_tasks_learn}",   
+                f"concurrent tasks : {self.concurrent_tasks_learn}",
+
                 ]
 
         print(*text, sep='\n')
@@ -494,21 +495,38 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.project_dir_deploy = path
 
         self.ui.targetlabels_deploy.clear()
-        plt = platform.system()  # to fix probems between different platforms
-        if plt == 'Darwin':
+        pltf = platform.system()  # to fix probems between different platforms
+        if pltf == 'Darwin':
             pathlib.WindowsPath = pathlib.PosixPath
-        print(f"plattform is {plt}")
-
+        print(f"plattform is {pltf}")
 
         for root, dirs, files in os.walk(path, topdown=False):
+
             for name in files:
                 pat = os.path.join(root, name).split('/')
-                if pat[-1] == 'export.pkl':
-                    data = os.path.join(root, name)
-                    item = QtWidgets.QListWidgetItem('_'.join(pat[-3:-1]))
-                    item.setData(QtCore.Qt.UserRole, data)
 
-                    self.ui.targetlabels_deploy.addItem(item)
+                if pat[-1] == 'export.pkl':
+
+                    if 'fold' not in pat[-2]:
+                        name = pat[-2]
+                        fold = False
+                        path = '/'.join(pat[:-1])
+
+                        data = [name,fold,path]
+                        item = QtWidgets.QListWidgetItem(name)
+                        item.setData(QtCore.Qt.UserRole, data)
+                        self.ui.targetlabels_deploy.addItem(item)
+                    elif 'fold_0' in pat[-2]:
+                        # fold!
+                        name = pat[-3]
+                        fold = True
+                        path = '/'.join(pat[:-2])
+
+                        data = [name, fold, path]
+                        item = QtWidgets.QListWidgetItem(name+'(k-fold)')
+                        item.setData(QtCore.Qt.UserRole, data)
+                        self.ui.targetlabels_deploy.addItem(item)
+
 
     def open_model_path_deploy(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', r"/GUI_deephist_python/models", "*.pkl")
@@ -517,13 +535,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.model_path_deploy = path[0]
             print(path[0])
 
-        plt = platform.system()  # to fix probems between different platforms
-        if plt == 'Darwin':
+        pltf = platform.system()  # to fix probems between different platforms
+        if pltf == 'Darwin':
             pathlib.WindowsPath = pathlib.PosixPath
-        print(f"plattform is {plt}")
+        print(f"plattform is {pltf}")
         try:
             learner = load_learner(path[0])
-            print(learner.dls.tfms[1][0].cols[0]) # TODO not working yet.
+            print(learner.dls.tfms[1][0].cols[0])
             data = path[0]
             item = QtWidgets.QListWidgetItem(learner.dls.tfms[1][0].cols[0])
             item.setData(QtCore.Qt.UserRole, data)
@@ -540,7 +558,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if path != ('', ''):
             self.folderpath_learn = path  # saving path
 
-
     def open_patmasttab_deploy(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', r"/GUI_deephist_python/cliniData", "*.xlsx")
 
@@ -550,8 +567,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if path[0] != "":
             df = pd.read_excel(path[0])
             print(list(df))#TODO check if chosen model is applicabale with dataset
-
-
 
     def open_slidmasttab_deploy(self):
         path = QtWidgets.QFileDialog.getOpenFileName(self, 'Open a file', "/GUI_deephist_python/cliniData")
@@ -564,24 +579,23 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if path != ('', ''):
             self.choose_tiledir_deploy = path
 
-
     def run_deploy_click(self):
 
         def execute_deploy():
             do_experiment(
-                project_dir=self.project_dir_deploy,
+                project_dir=self.savingpath_deploy,
                 get=get.MultiTarget(
                     get.SimpleRun(),
                     test_cohorts_df=pd.concat([
                         cohort(tile_path, clin_path, slid_path)
                         for tile_path, clin_path, slid_path in self.cohortlist_deploy]
                     ),
-                    target_labels=[str(x.text()) for x in self.targets_deploy],
 
-                    balance=True,  # weather to balance the training set
+
+                    balance=True,  # TODO weather to balance the training set
                     # min_support=5,
                     train=Load(
-                        project_dir=self.project_dir_deploy,
+                        project_dir=self.savingpath_deploy,
                         training_project_dir=self.model_path_deploy),
                 ),
                 evaluators=[Grouped(auroc), Grouped(p_value)],
@@ -610,8 +624,9 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         text = [f"\n Deploy Data:\n",
                 f"Project dir: {str(self.project_dir_deploy)}",
                 f"(last) model path: {self.model_path_deploy }",
-                f"saving path: {self.folderpath_learn }",
-                f"choosen models: {modellist }",
+                f"saving path: {self.savingpath_deploy }",
+                f"choosen models: {str([str(x.data(QtCore.Qt.UserRole)[0]) for x in self.ui.targetlabels_deploy.selectedItems()])}",
+                f"paths: {str([str(x.data(QtCore.Qt.UserRole)[2]) for x in self.ui.targetlabels_deploy.selectedItems()])}",
                 f"cohort list: {cohortlist_deploy}",
                 f"cohort names: {cohortnamelist_deploy}",
                 f"evaluator list: {evaluators}",
@@ -635,17 +650,22 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         returnValue = msgBox.exec()
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
-            try:
-                self.worker = Worker(execute_deploy)  # Any other args, kwargs are passed to the run function
-                # Execute
-                self.threadpool.start(self.worker)
+            for x in self.ui.targetlabels_deploy.selectedItems():
+                self.current_modelpath = str(x.data(QtCore.Qt.UserRole)[2])
+                if True:  # TODO change to try when done
+                    self.worker = Worker(execute_deploy)  # Any other args, kwargs are passed to the run function
+                    # Execute
+                    self.threadpool.start(self.worker)
+                    print(self.current_modelpath)
+                if False:
+                    try:
+                        ...
+                    except (ValueError, Exception):
+                        # if not working raise dialog
+                        QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")#
 
-            except (ValueError, Exception):
-                # if not working raise dialog
-                QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")
-
-            finally:
-                print("cont'd")
+                    finally:
+                        print("cont'd")
 
     def reset_deploy_click(self):
         self.slidmasttab_path_deploy = " "
@@ -660,7 +680,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.cohortlist_deploy = []
         self.cohort_name_list_deploy = []
         print("reset")
-
 
     def advanced_deploy_click(self):
         """open advanced settings for deploy"""
@@ -732,8 +751,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             data = [eval, groupby]
             item.setData(QtCore.Qt.UserRole, data)
             self.ui.evaluator_list_deploy.addItem(item)
-
-
 
     def del_list_clicked_deploy(self):
         self.ui.evaluator_list_deploy.clear()
@@ -828,7 +845,7 @@ class Advanced_Sets(QtWidgets.QDialog):
         self.ui.setupUi(self)
         self.settings = settings
         if self.settings == 0:
-            self.gpunum,self.max_epochs,self.batch_size,self.max_tile_num ,self.num_workers,self.concurrent_tasks,self.na_values = self.save_advanced()
+            self.gpunum, self.max_epochs,self.batch_size,self.max_tile_num ,self.num_workers,self.concurrent_tasks,self.na_values = self.save_advanced()
         else:
             # Values
             self.gpunum = self.settings[0]
@@ -878,8 +895,8 @@ class Advanced_Sets(QtWidgets.QDialog):
 
 
     def reset_advanced(self):
+        #  TODO :need hardcoded values to get back after clicking on reset
         self.ui.GPUnum.setProperty("value", self.settings[0])
-
         self.ui.max_epochs.setProperty("value",self.settings[1])
         self.ui.batch_size.setProperty("value",self.settings[2])
         self.ui.maxTileNum.setProperty("value",self.settings[3])

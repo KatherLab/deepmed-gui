@@ -323,6 +323,9 @@ class Ui_gui_histo_main(object):
         self.label_29.setObjectName("label_29")
         self.gridLayout_2.addWidget(self.label_29, 8, 0, 1, 1)
         self.evaluator_list_deploy = QtWidgets.QListWidget(self.Deploy)
+        self.evaluator_list_deploy.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+        self.evaluator_list_deploy.setProperty("showDropIndicator", False)
+        self.evaluator_list_deploy.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
         self.evaluator_list_deploy.setObjectName("evaluator_list_deploy")
         self.gridLayout_2.addWidget(self.evaluator_list_deploy, 16, 7, 3, 1)
         self.group_evaluators_deploy = QtWidgets.QComboBox(self.Deploy)
@@ -471,7 +474,7 @@ class Ui_gui_histo_main(object):
         self.horizontalLayout_2.addWidget(self.Tabs)
         gui_histo_main.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(gui_histo_main)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 916, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 916, 24))
         self.menubar.setObjectName("menubar")
         self.menuhello = QtWidgets.QMenu(self.menubar)
         self.menuhello.setObjectName("menuhello")
@@ -528,7 +531,7 @@ class Ui_gui_histo_main(object):
 
         self.retranslateUi(gui_histo_main)
         self.Tabs.setCurrentIndex(1)
-        self.tabWidget.setCurrentIndex(3)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(gui_histo_main)
 
     def retranslateUi(self, gui_histo_main):
@@ -575,7 +578,7 @@ class Ui_gui_histo_main(object):
         self.del_list_deploy.setText(_translate("gui_histo_main", "delete list"))
         self.savingpath_deploy.setText(_translate("gui_histo_main", "choohe path"))
         self.label_22.setText(_translate("gui_histo_main", "tile directory"))
-        self.label_11.setText(_translate("gui_histo_main", "saving path"))
+        self.label_11.setText(_translate("gui_histo_main", "model path"))
         self.addlist_deploy.setText(_translate("gui_histo_main", "add to list"))
         self.projectdir_deploy.setText(_translate("gui_histo_main", "choose folder"))
         self.reset_deploy.setText(_translate("gui_histo_main", "reset"))
