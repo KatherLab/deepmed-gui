@@ -536,7 +536,7 @@ class Ui_gui_histo_main(object):
 
     def retranslateUi(self, gui_histo_main):
         _translate = QtCore.QCoreApplication.translate
-        gui_histo_main.setWindowTitle(_translate("gui_histo_main", "Deep Histology v2.0"))
+        gui_histo_main.setWindowTitle(_translate("gui_histo_main", "Deep Histology v2.1"))
         self.label_6.setText(_translate("gui_histo_main", "Mode Settings:"))
         self.label_4.setText(_translate("gui_histo_main", "validation ratio"))
         self.label_28.setText(_translate("gui_histo_main", "cohort list:"))
@@ -596,7 +596,7 @@ class Ui_gui_histo_main(object):
         self.label_29.setText(_translate("gui_histo_main", "Cohort settings:"))
         self.group_evaluators_deploy.setItemText(0, _translate("gui_histo_main", "no grouping"))
         self.group_evaluators_deploy.setItemText(1, _translate("gui_histo_main", "PATIENT"))
-        self.evaluators_deploy.setItemText(0, _translate("gui_histo_main", "ROC"))
+        self.evaluators_deploy.setItemText(0, _translate("gui_histo_main", "Roc"))
         self.evaluators_deploy.setItemText(1, _translate("gui_histo_main", "auroc"))
         self.evaluators_deploy.setItemText(2, _translate("gui_histo_main", "F1"))
         self.evaluators_deploy.setItemText(3, _translate("gui_histo_main", "TopTiles"))

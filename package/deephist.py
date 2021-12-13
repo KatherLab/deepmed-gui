@@ -594,13 +594,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
                     balance=True,  # TODO weather to balance the training set
                     # min_support=5,
+                    evaluators=[Grouped(auroc), Grouped(p_value)],
+                    crossval_evaluators=[AggregateStats(label='fold')],
+                    multi_target_evaluators=[AggregateStats(label='target', over=['fold'])],
                     train=Load(
                         project_dir=self.savingpath_deploy,
                         training_project_dir=self.model_path_deploy),
-                ),
-                evaluators=[Grouped(auroc), Grouped(p_value)],
-                crossval_evaluators=[AggregateStats(label='fold')],
-                multi_target_evaluators=[AggregateStats(label='target', over=['fold'])],
+                        )
             )
 
 
@@ -642,8 +642,10 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 ]
 
 
-        print(*text, sep='\n')
 
+        print(*text, sep='\n')
+        evaluator_func =  ",".join(evaluators)
+        exec(f"evaluators_deploy =  [{evaluator_func}]  # this can be used with exec to insert into deepmed")
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Are you sure you want to run the deploy?")
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
@@ -747,7 +749,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             item.setData(QtCore.Qt.UserRole, data)
             self.ui.evaluator_list_deploy.addItem(item)
         else:
-            item = QtWidgets.QListWidgetItem(f"Grouped({eval}, by= {groupby})")
+            item = QtWidgets.QListWidgetItem(f"Grouped({eval}, by= \'{groupby}\')")
             data = [eval, groupby]
             item.setData(QtCore.Qt.UserRole, data)
             self.ui.evaluator_list_deploy.addItem(item)
