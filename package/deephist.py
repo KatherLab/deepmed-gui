@@ -1,6 +1,7 @@
 import sys
 from PyQt5 import QtWidgets, QtCore
 
+
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtCore import pyqtSlot
 from package.mainwindow import Ui_gui_histo_main
@@ -107,10 +108,11 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         ###########
 
         # Values Visualize
-
+        self.project_dir_vis =""
         # Events Visualize
-        self.ui.nextIm_vis.clicked.connect(self.count_up_vis)
-        self.ui.prevIm_vis.clicked.connect(self.count_down_vis)
+        self.ui.choose_path_vis.clicked.connect(self.choose_path_clicked_vis)
+        #self.ui.nextIm_vis.clicked.connect(self.count_up_vis)
+        #self.ui.prevIm_vis.clicked.connect(self.count_down_vis)
         ###########
 
 
@@ -836,6 +838,60 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         n = self.ui.imgcounter_vis.intValue()
         if n > 0:
             self.ui.imgcounter_vis.display(n - 1)
+
+    def choose_path_clicked_vis(self):
+        path = QtWidgets.QFileDialog.getExistingDirectory(self, r"\home")
+
+
+        if path != ('', ''):
+            self.project_dir_vis = path
+
+        self.ui.target_list_vis.clear()
+        pltf = platform.system()  # to fix probems between different platforms
+        if pltf == 'Darwin':
+            pathlib.WindowsPath = pathlib.PosixPath
+        print(f"plattform is {pltf}")
+
+        if  os.path.exists(path + r"/logfile"):
+            print(path + r"/logfile")
+
+            f = open(path + r"/logfile")
+            scene = QtWidgets.QGraphicsScene()
+            scene.addText(f.read())
+            f.close()
+
+
+            self.ui.logs_vis.setScene(scene)
+            self.ui.logs_vis.show()
+
+        for root, dirs, files in os.walk(path, topdown=False):
+
+            for name in files:
+                pat = os.path.join(root, name).split('/')
+
+                if pat[-1] == 'export.pkl':
+
+                    if 'fold' not in pat[-2]:
+                        name = pat[-2]
+                        fold = False
+                        path = '/'.join(pat[:-1])
+
+                        data = [name, fold, path]
+                        item = QtWidgets.QListWidgetItem(name)
+                        item.setData(QtCore.Qt.UserRole, data)
+                        self.ui.target_list_vis.addItem(item)
+                    elif 'fold_0' in pat[-2]:
+                        # fold!
+                        name = pat[-3]
+                        fold = True
+                        path = '/'.join(pat[:-2])
+
+                        data = [name, fold, path]
+                        item = QtWidgets.QListWidgetItem(name + '(k-fold)')
+                        item.setData(QtCore.Qt.UserRole, data)
+                        self.ui.target_list_vis.addItem(item)
+
+
 
 
 class Advanced_Sets(QtWidgets.QDialog):
