@@ -33,5 +33,10 @@ GUI for an easier use of the deepmed pipeline
 * advanced settings again offers settings for the deployment
 * click on run once to start the deployment.
 
+### 2.c Visualization
+* choose a deployed project path
+* choose one of the used targets and the desired evaluator 
+* In the subtabs one can find the top/botton tiles, plots of the chosen evaluator, and the logfile of the deployment
+
 
  
