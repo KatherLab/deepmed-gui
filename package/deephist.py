@@ -72,6 +72,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         ###########
 
         # Values Deploy
+        self.ui.group_evaluators_deploy.clear()# TODO remove afterwards
+        self.ui.evaluators_deploy.currentIndexChanged.connect(self.evaluator_clicked_deploy)
         self.project_dir_deploy = ""  # path for project directory
         self.batch_size_deploy = self.batch_size_learn  #
         self.max_tile_num_deploy = self.max_tile_num_learn  #
@@ -85,6 +87,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.targets_deploy = self.ui.targetlabels_deploy.selectedItems()  # targets chosen for deployment
         self.advanced_values_deploy = [3, 10, 100, 50, 0, 4, ['NA', 'Not Available', 'Equivocal', 'Not Performed', 'unknown']]  # TODO add advanced settings to deploy
         self.savingpath_deploy = ""
+        self.targetlist_deploy = [""]
         #self.loader()
 
         # Events Deploy
@@ -568,6 +571,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
         if path[0] != "":
             df = pd.read_excel(path[0])
+            self.targetlist_deploy = df
+
             print(list(df))#TODO check if chosen model is applicabale with dataset
 
     def open_slidmasttab_deploy(self):
@@ -582,6 +587,16 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.choose_tiledir_deploy = path
 
     def run_deploy_click(self):
+
+        # TODO evaluators to readable function
+        def eval2function(evallist):
+            if evallist == []:
+                print("Error. No evaluations given.")
+            else:
+                outputfunc = "evaluators = ["
+                for eval in evallist:
+                    outputfunc += str(eval)
+
 
         def execute_deploy():
             do_experiment(
@@ -683,6 +698,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
         self.cohortlist_deploy = []
         self.cohort_name_list_deploy = []
+        self.ui.evaluator_list_deploy.clear()
+        self.targetlist_deploy = [""]
         print("reset")
 
     def advanced_deploy_click(self):
@@ -751,10 +768,16 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             item.setData(QtCore.Qt.UserRole, data)
             self.ui.evaluator_list_deploy.addItem(item)
         else:
-            item = QtWidgets.QListWidgetItem(f"Grouped({eval}, by= \'{groupby}\')")
-            data = [eval, groupby]
-            item.setData(QtCore.Qt.UserRole, data)
-            self.ui.evaluator_list_deploy.addItem(item)
+            if eval != "AggregateStats":
+                item = QtWidgets.QListWidgetItem(f"Grouped({eval}, by= \'{groupby}\')")
+                data = [eval, groupby]
+                item.setData(QtCore.Qt.UserRole, data)
+                self.ui.evaluator_list_deploy.addItem(item)
+            else:
+                item = QtWidgets.QListWidgetItem(f"AggregateStats(label=\'{groupby}\')")
+                data = [eval, groupby]
+                item.setData(QtCore.Qt.UserRole, data)
+                self.ui.evaluator_list_deploy.addItem(item)
 
     def del_list_clicked_deploy(self):
         self.ui.evaluator_list_deploy.clear()
@@ -829,7 +852,16 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def click_checkSubset_deploy(self):
         self.ui.deploy_subset.setEnabled(self.ui.check_Subset_deploy.checkState())
+    def evaluator_clicked_deploy(self):
+        if self.ui.evaluators_deploy.currentText() == "AggregateStats":
+            self.ui.group_evaluators_deploy.clear()
+            self.ui.group_evaluators_deploy.addItem("folds")
+            self.ui.group_evaluators_deploy.addItems(self.targetlist_deploy)
 
+        else:
+            self.ui.group_evaluators_deploy.clear()
+            self.ui.group_evaluators_deploy.addItem("no grouping")
+            self.ui.group_evaluators_deploy.addItems(self.targetlist_deploy)
     def count_up_vis(self):
         n = self.ui.imgcounter_vis.intValue()
         self.ui.imgcounter_vis.display(n + 1)
@@ -847,14 +879,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.project_dir_vis = path
 
         self.ui.target_list_vis.clear()
+
         pltf = platform.system()  # to fix probems between different platforms
         if pltf == 'Darwin':
             pathlib.WindowsPath = pathlib.PosixPath
         print(f"plattform is {pltf}")
 
         if  os.path.exists(path + r"/logfile"):
-            print(path + r"/logfile")
-
             f = open(path + r"/logfile")
             scene = QtWidgets.QGraphicsScene()
             scene.addText(f.read())
@@ -863,24 +894,53 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
             self.ui.logs_vis.setScene(scene)
             self.ui.logs_vis.show()
+        targets = next(os.walk(path))[1]
+        self.ui.target_list_vis.clear()
 
-        for root, dirs, files in os.walk(path, topdown=False):
 
+        for target in targets:
+            if not os.path.exists(str(path+target+'fold_0')):
+                fold = False
+                folderpath = path + r"/" + target
+                data = [target, fold, folderpath]
+
+                item = QtWidgets.QListWidgetItem(target)
+                item.setData(QtCore.Qt.UserRole, data)
+                self.ui.target_list_vis.addItem(item)
+            else:
+                fold = True
+
+                folderpath = path + r"/" + target
+                folds = next(os.walk(folderpath))[1]
+
+                data = [target, len(folds), folderpath]
+
+                item = QtWidgets.QListWidgetItem(target)
+                item.setData(QtCore.Qt.UserRole, data)
+                self.ui.target_list_vis.addItem(item)
+        """
+        for root, dirs, files in os.walk(path, topdown=False):  # Do not change topdown from False
+            print(f"root is {root}")
+            print(f"dirs is {dirs}")
             for name in files:
                 pat = os.path.join(root, name).split('/')
 
-                if pat[-1] == 'export.pkl':
 
+                
+                if pat[-1] == 'export.pkl':
+                    print("contains export.pkl")
                     if 'fold' not in pat[-2]:
+                        print('nofold')
                         name = pat[-2]
                         fold = False
                         path = '/'.join(pat[:-1])
-
+                        print("oi")
                         data = [name, fold, path]
                         item = QtWidgets.QListWidgetItem(name)
                         item.setData(QtCore.Qt.UserRole, data)
                         self.ui.target_list_vis.addItem(item)
                     elif 'fold_0' in pat[-2]:
+                        print('fold')
                         # fold!
                         name = pat[-3]
                         fold = True
@@ -890,6 +950,10 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                         item = QtWidgets.QListWidgetItem(name + '(k-fold)')
                         item.setData(QtCore.Qt.UserRole, data)
                         self.ui.target_list_vis.addItem(item)
+                    """
+
+
+
 
 
 
