@@ -395,7 +395,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def testclick_learn(self):
 
-        project_dir = 'C:/Users/tseibel/Desktop/test/savepath2'
+        project_dir = 'C:/Users/tseibel/Desktop/testfolder_gui'
         tiles_path = 'C:/Users/tseibel/Desktop/test/BLOCKS_NORM_MACENKO'
         clini_path = 'C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_CLINI.xlsx'
         slide_path = 'C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_SLIDE.xlsx'
@@ -784,71 +784,57 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def testclick_deploy(self):
 
-        project_dir = 'C:/Users/tseibel/Desktop/savepath1'
-        model_dir = 'C:/Users/tseibel/Desktop/test/savepath2'
+        project_dir = 'C:/Users/tseibel/Desktop/deployfolder_gui'
+        training_project_dir = 'C:/Users/tseibel/Desktop/testfolder_gui'
         def Execute_test():
-            do_experiment(
+            test_cohorts_df = cohort(
+                        tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
+                        clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
+                        slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx')
+
+            
+            load = Load(
                 project_dir=project_dir,
-                get=get.MultiTarget(
-                    get.SimpleRun(),
-                    test_cohorts_df=cohort(
-                        tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
-                        clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
-                        slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx'),
-                    target_labels=['ER Status By IHC', 'Cancer Type Detailed', 'Neoplasm Histologic Type Name',
-                                   'Fraction Genome Altered'],
-                    
-                    max_train_tile_num=500, # how many tiles from each whole slide image (maximum)
-                    min_support=8,    # how many patients are required in each category?
-                    valid_frac=.2,    # which fraction of patients is used for validation (early stopping)+
-                    # now define all the values which will be excluded (set to missing)
-                    na_values=['NA','Not Available', 'Equivocal', 'Not Performed'],
-                    balance=True,  # weather to balance the training set
-                    # min_support=5,
-                    evaluators=[TopTiles(), Grouped(auroc), Grouped(Roc), Grouped(count), Grouped(p_value)],
+                training_project_dir=training_project_dir)
 
-                    multi_target_evaluators=[AggregateStats(label='target')],
-                    train=Load(
-                        project_dir= project_dir,
-                        training_project_dir=model_dir),
-                ),
+            simple_deploy_get = get.SimpleRun(
+                test_cohorts_df=test_cohorts_df,
+                max_train_tile_num=500,
+                na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', "unknown", "na", "Na", "nA", "NA",
+                               "x"],
+                train=load,
+                evaluators=[TopTiles(), Grouped(auroc), Grouped(Roc()), \
+                    Grouped(count), Grouped(p_value)])
 
-            )
+            multi_deploy_get = get.MultiTarget(
+                simple_deploy_get,
+                target_labels = ['ER Status By IHC', 'Cancer Type Detailed', 'Neoplasm Histologic Type Name',
+                        'Fraction Genome Altered'],
+                multi_target_evaluators=[AggregateStats(label='target')]
+                )
 
-
-        def Execute_test2():
-            project_dir2 = 'C:/Users/tseibel/Desktop/test/savepath1'
             do_experiment(
-                project_dir=project_dir2,
-                get=get.MultiTarget(
-                    get.SimpleRun(),
-                    test_cohorts_df=cohort(
-                        tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
-                        clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
-                        slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx'),
-                    target_labels=['ER Status By IHC'],
-                    na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed'],
+            project_dir=project_dir,
+            get=multi_deploy_get)
 
-                    balance=True,  # weather to balance the training set
-                    # min_support=5,
-                    evaluators=[Grouped(auroc), Grouped(p_value)],
 
-                    train=Load(
-                        project_dir='C:/Users/tseibel/Desktop/test/savepath1',
-                        training_project_dir='C:/Users/tseibel/Desktop/test/savepath1'),
-                ),
 
-            )
 
+
+            
+
+        
+            
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Do you want to start the deployment?")
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         returnValue = msgBox.exec()
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
-            self.worker = Worker(Execute_test)  # Any other args, kwargs are passed to the run function
+            #self.worker = Worker(Execute_test)  # Any other args, kwargs are passed to the run function
             # Execute
-            self.threadpool.start(self.worker)
+            #self.threadpool.start(self.worker)
+            Execute_test()
 
     def click_checkSubset_deploy(self):
         self.ui.deploy_subset.setEnabled(self.ui.check_Subset_deploy.checkState())
