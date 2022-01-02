@@ -917,30 +917,18 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                                    range(self.ui.evaluator_list_deploy.count()) if
                                    self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[
                                        2] == 'cross_validation']
+        
             def eval2function(evallist, evaltype):
 
                 if evallist == []:
                     print("Error. No evaluations given.")
                 else:
-                    if evaltype == 'single':
-                        outputfunc = "evaluators = ["
-                        for eval in evallist:
-                            outputfunc += str(eval) + ","
-                        outputfunc += "]"
-                        return exec(outputfunc)
-
-                    elif evaltype == 'multi':
-                        outputfunc = "multi_target_evaluators = ["
-                        for eval in evallist:
-                            outputfunc += str(eval) + ","
-                        outputfunc += "]"
-                        return exec(outputfunc)
-                    else:
-                        outputfunc = "crossval_evaluators = ["
-                        for eval in evallist:
-                            outputfunc += str(eval) + ","
-                        outputfunc += "]"
-                        return exec(outputfunc)
+                    outputfunc = []
+                    for eval in evallist:
+                        stringvalue = "self.newval = "+ str(eval)
+                        exec(stringvalue)
+                        outputfunc.append(self.newval)
+                    return outputfunc
 
             def execute_deploy_multi():  # single and multi
 
@@ -948,8 +936,12 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                         tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
                         clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
                         slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx')
-                project_dir = project_dir
-                training_project_dir = training_project_dir
+                evals =eval2function(evaluators_single, "single") # [TopTiles(), Grouped(auroc), Grouped(Roc()),  Grouped(count), Grouped(p_value)]
+
+                     
+                multievals = [AggregateStats(label='target')]#  eval2function(evaluators_multi, "multi")
+                project_dir = 'C:/Users/tseibel/Desktop/deployfolder_gui'
+                training_project_dir = 'C:/Users/tseibel/Desktop/testfolder_gui'
                 load = Load(
                     project_dir=project_dir,
                     training_project_dir=training_project_dir)
@@ -959,13 +951,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', "unknown", "na", "Na", "nA", "NA",
                                "x"],
                     train=load,
-                    evaluators=eval2function(evaluators_single, "single"),
+                    evaluators=evals,
                 )
                 multi_deploy_get = get.MultiTarget(
                     simple_deploy_get,
-                    target_labels=[str(x.data(QtCore.Qt.UserRole)[0]) for x in
-                                   self.ui.targetlabels_deploy.selectedItems()],
-                    multi_target_evaluators=eval2function(evaluators_multi, "multi"),
+                    target_labels =  ['ER Status By IHC', 'Cancer Type Detailed', 'Neoplasm Histologic Type Name',
+                        'Fraction Genome Altered'],
+                    multi_target_evaluators=multievals,
                 )
                 do_experiment(
                     project_dir=project_dir,
@@ -1008,7 +1000,9 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 )
 
             if not evaluators_crossval:
+                print("run multi")
                 execute_deploy_multi()
+                
             else:
                 execute_deploy_crossval()
 
@@ -1024,7 +1018,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             #self.worker = Worker(Execute_test)  # Any other args, kwargs are passed to the run function
             # Execute
             #self.threadpool.start(self.worker)
-            Execute_test()
+            Execute_test2()
 
     def click_checkSubset_deploy(self):
         self.ui.deploy_subset.setEnabled(self.ui.check_Subset_deploy.checkState())
