@@ -589,35 +589,90 @@ class Mainwindow_con(QtWidgets.QMainWindow):
     def run_deploy_click(self):
 
         # TODO evaluators to readable function
-        def eval2function(evallist):
+        def eval2function(evallist,evaltype):
+
             if evallist == []:
                 print("Error. No evaluations given.")
             else:
-                outputfunc = "evaluators = ["
-                for eval in evallist:
-                    outputfunc += str(eval)
+                if evaltype == 'single':
+                    outputfunc = "evaluators = ["
+                    for eval in evallist:
+                        outputfunc += str(eval)+","
+                    outputfunc += "]"
+                    return exec(outputfunc)
 
+                elif evaltype == 'multi':
+                    outputfunc = "multi_target_evaluators = ["
+                    for eval in evallist:
+                        outputfunc += str(eval)+","
+                    outputfunc += "]"
+                    return exec(outputfunc)
+                else:
+                    outputfunc = "crossval_evaluators = ["
+                    for eval in evallist:
+                        outputfunc += str(eval) + ","
+                    outputfunc += "]"
+                    return exec(outputfunc)
 
-        def execute_deploy():
-            do_experiment(
-                project_dir=self.savingpath_deploy,
-                get=get.MultiTarget(
-                    get.SimpleRun(),
-                    test_cohorts_df=pd.concat([
+        def execute_deploy_multi():  # single and multi
+
+            test_cohorts_df =pd.concat([
                         cohort(tile_path, clin_path, slid_path)
                         for tile_path, clin_path, slid_path in self.cohortlist_deploy]
-                    ),
+                    )
+            project_dir = self.savingpath_deploy
+            training_project_dir = self.project_dir_deploy
+            load = Load(
+                project_dir=project_dir,
+                training_project_dir=training_project_dir)
+            simple_deploy_get = get.SimpleRun(
+                test_cohorts_df=test_cohorts_df,
+                max_train_tile_num=str(self.max_tile_num_learn),
+                na_values=str(self.na_values_learn),
+                train=load,
+                evaluators=eval2function(evaluators_single,"single"),
+                     )
+            multi_deploy_get = get.MultiTarget(
+                simple_deploy_get,
+                target_labels=[str(x.data(QtCore.Qt.UserRole)[0]) for x in self.ui.targetlabels_deploy.selectedItems()],
+                multi_target_evaluators=eval2function(evaluators_multi,"multi"),
+                    )
+            do_experiment(
+                project_dir=project_dir,
+                get=multi_deploy_get
+                    )
 
+        def execute_deploy_crossval():  #crossval
+            test_cohorts_df = pd.concat([
+                cohort(tile_path, clin_path, slid_path)
+                for tile_path, clin_path, slid_path in self.cohortlist_deploy]
+            )
+            project_dir = self.savingpath_deploy
+            training_project_dir = self.project_dir_deploy
+            load = Load(
+                project_dir=project_dir,
+                training_project_dir=training_project_dir)
+            simple_deploy_get = get.SimpleRun(
+                test_cohorts_df=test_cohorts_df,
+                max_train_tile_num=str(self.max_tile_num_learn),
+                na_values=str(self.na_values_learn),
+                train=load,
+                evaluators=eval2function(evaluators_single, "single"),
+            )
+            crossval_get = get.Crossval(
+                simple_deploy_get,
+                cohorts_df=test_cohorts_df,
+                crossval_evaluators=eval2function(evaluators_crossval, "crossval"),
+            )
 
-                    balance=True,  # TODO weather to balance the training set
-                    # min_support=5,
-                    evaluators=[Grouped(auroc), Grouped(p_value)],
-                    crossval_evaluators=[AggregateStats(label='fold')],
-                    multi_target_evaluators=[AggregateStats(label='target', over=['fold'])],
-                    train=Load(
-                        project_dir=self.savingpath_deploy,
-                        training_project_dir=self.model_path_deploy),
-                        )
+            multi_deploy_get = get.MultiTarget(
+                crossval_get,
+                target_labels=[str(x.data(QtCore.Qt.UserRole)[0]) for x in self.ui.targetlabels_deploy.selectedItems()],
+                multi_target_evaluators=eval2function(evaluators_multi, "multi"),
+            )
+            do_experiment(
+                project_dir=project_dir,
+                get=multi_deploy_get
             )
 
 
@@ -632,21 +687,32 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             item_text = self.ui.cohortlist_deploy.item(item_index).text()
             cohortnamelist_deploy.append(item_text)
 
-        modellist = [self.ui.targetlabels_deploy.item(idx).text() for idx in range(self.ui.targetlabels_deploy.count())]
+        modellist = [self.ui.targetlabels_deploy.item(idx).text() for idx in range(self.ui.targetlabels_deploy.count()) ]
 
-        evaluators = [self.ui.evaluator_list_deploy.item(idx).text() for idx in range(self.ui.evaluator_list_deploy.count()) ]
+        evaluators_single = [self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[0] for idx in
+                             range(self.ui.evaluator_list_deploy.count()) if
+                             self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[2] == 'single']
+        evaluators_multi = [self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[0] for idx in
+                            range(self.ui.evaluator_list_deploy.count()) if
+                            self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[2] == 'multi']
+        evaluators_crossval = [self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[0] for idx in
+                            range(self.ui.evaluator_list_deploy.count()) if
+                            self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[2] == 'cross_validation']
 
         print("run")
 
         text = [f"\n Deploy Data:\n",
-                f"Project dir: {str(self.project_dir_deploy)}",
+                f"Training project dir: {str(self.project_dir_deploy)}",
                 f"(last) model path: {self.model_path_deploy }",
-                f"saving path: {self.savingpath_deploy }",
+                f"project dir: {self.savingpath_deploy }",
                 f"choosen models: {str([str(x.data(QtCore.Qt.UserRole)[0]) for x in self.ui.targetlabels_deploy.selectedItems()])}",
                 f"paths: {str([str(x.data(QtCore.Qt.UserRole)[2]) for x in self.ui.targetlabels_deploy.selectedItems()])}",
                 f"cohort list: {cohortlist_deploy}",
                 f"cohort names: {cohortnamelist_deploy}",
-                f"evaluator list: {evaluators}",
+                f"single evaluator list: {evaluators_single}",
+                f"multi evaluator list: {evaluators_multi}",
+                f"crossval evaluator list: {evaluators_crossval}",
+
                 f"\nADVANCED SETTINGS:\n",  #
                 f"Max epochs: {str(self.max_epochs_learn)}",
                 f"Batch size: {str(self.batch_size_learn)}",
@@ -661,30 +727,36 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
 
         print(*text, sep='\n')
-        evaluator_func =  ",".join(evaluators)
-        exec(f"evaluators_deploy =  [{evaluator_func}]  # this can be used with exec to insert into deepmed")
+        #evaluator_func =  ",".join(evaluators)
+        #exec(f"evaluators_deploy =  [{evaluator_func}]  # this can be used with exec to insert into deepmed")
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Are you sure you want to run the deploy?")
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         returnValue = msgBox.exec()
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
-            for x in self.ui.targetlabels_deploy.selectedItems():
-                self.current_modelpath = str(x.data(QtCore.Qt.UserRole)[2])
-                if True:  # TODO change to try when done
-                    self.worker = Worker(execute_deploy)  # Any other args, kwargs are passed to the run function
+
+            if True:  # TODO change to try when done
+
+                if not evaluators_crossval :# if no crossval evaluation was chosen do regular deployment
+                    self.worker = Worker(execute_deploy_multi)  # Any other args, kwargs are passed to the run function
                     # Execute
                     self.threadpool.start(self.worker)
-                    print(self.current_modelpath)
-                if False:
-                    try:
-                        ...
-                    except (ValueError, Exception):
-                        # if not working raise dialog
-                        QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")#
 
-                    finally:
-                        print("cont'd")
+                else:
+                    self.worker = Worker(
+                        execute_deploy_crossval)  # Any other args, kwargs are passed to the run function
+                    # Execute
+                    self.threadpool.start(self.worker)
+            if False:
+                try:
+                    ...
+                except (ValueError, Exception):
+                    # if not working raise dialog
+                    QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")#
+
+                finally:
+                    print("cont'd")
 
     def reset_deploy_click(self):
         self.slidmasttab_path_deploy = " "
@@ -699,6 +771,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.cohortlist_deploy = []
         self.cohort_name_list_deploy = []
         self.ui.evaluator_list_deploy.clear()
+        self.ui.group_evaluators_deploy.clear()
+        self.ui.group_evaluators_deploy.addItem("no grouping")
         self.targetlist_deploy = [""]
         print("reset")
 
@@ -760,22 +834,37 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def add_eval_clicked_deploy(self):
         #self.ui.evaluator_list_deploy.
+        eval_type = self.ui.eval_type_deploy.currentText()
         eval = self.ui.evaluators_deploy.currentText()
         groupby = self.ui.group_evaluators_deploy.currentText()
         if groupby =='no grouping':
-            item = QtWidgets.QListWidgetItem(f"{eval}")
-            data = [eval,'']
-            item.setData(QtCore.Qt.UserRole, data)
-            self.ui.evaluator_list_deploy.addItem(item)
-        else:
-            if eval != "AggregateStats":
-                item = QtWidgets.QListWidgetItem(f"Grouped({eval}, by= \'{groupby}\')")
-                data = [eval, groupby]
+            if eval in ["auroc", "count", "p_value", "r2"]:
+                item = QtWidgets.QListWidgetItem(f"{eval}   ({eval_type})")
+                data = [f"{eval}", '', eval_type]
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
             else:
-                item = QtWidgets.QListWidgetItem(f"AggregateStats(label=\'{groupby}\')")
-                data = [eval, groupby]
+                item = QtWidgets.QListWidgetItem(f"{eval}   ({eval_type})")
+                data = [f"{eval}()", '', eval_type]
+                item.setData(QtCore.Qt.UserRole, data)
+                self.ui.evaluator_list_deploy.addItem(item)
+
+
+        else:
+
+            if eval in ["auroc", "count", "p_value", "r2"]:
+                item = QtWidgets.QListWidgetItem(f"Grouped({eval}, by= \'{groupby}\')   ({eval_type})")
+                data = [f"Grouped({eval}, by= \'{groupby}\')", groupby,eval_type]
+                item.setData(QtCore.Qt.UserRole, data)
+                self.ui.evaluator_list_deploy.addItem(item)
+            elif eval in ["ConfusionMatrix","F1","Heatmap","Roc","TopTiles"]:
+                item = QtWidgets.QListWidgetItem(f"Grouped({eval}(), by= \'{groupby}\')   ({eval_type})")
+                data = [f"Grouped({eval}(), by= \'{groupby}\')", groupby,eval_type]
+                item.setData(QtCore.Qt.UserRole, data)
+                self.ui.evaluator_list_deploy.addItem(item)
+            else:
+                item = QtWidgets.QListWidgetItem(f"AggregateStats(label=\'{groupby}\')   ({eval_type})")
+                data = [f"Grouped({eval}(), by= \'{groupby}\')", groupby,eval_type]
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
 
@@ -817,11 +906,112 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             project_dir=project_dir,
             get=multi_deploy_get)
 
+        def Execute_test2():
+            evaluators_single = [self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[0] for idx in
+                                 range(self.ui.evaluator_list_deploy.count()) if
+                                 self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[2] == 'single']
+            evaluators_multi = [self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[0] for idx in
+                                range(self.ui.evaluator_list_deploy.count()) if
+                                self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[2] == 'multi']
+            evaluators_crossval = [self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[0] for idx in
+                                   range(self.ui.evaluator_list_deploy.count()) if
+                                   self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[
+                                       2] == 'cross_validation']
+            def eval2function(evallist, evaltype):
 
+                if evallist == []:
+                    print("Error. No evaluations given.")
+                else:
+                    if evaltype == 'single':
+                        outputfunc = "evaluators = ["
+                        for eval in evallist:
+                            outputfunc += str(eval) + ","
+                        outputfunc += "]"
+                        return exec(outputfunc)
 
+                    elif evaltype == 'multi':
+                        outputfunc = "multi_target_evaluators = ["
+                        for eval in evallist:
+                            outputfunc += str(eval) + ","
+                        outputfunc += "]"
+                        return exec(outputfunc)
+                    else:
+                        outputfunc = "crossval_evaluators = ["
+                        for eval in evallist:
+                            outputfunc += str(eval) + ","
+                        outputfunc += "]"
+                        return exec(outputfunc)
 
+            def execute_deploy_multi():  # single and multi
 
-            
+                test_cohorts_df = cohort(
+                        tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
+                        clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
+                        slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx')
+                project_dir = project_dir
+                training_project_dir = training_project_dir
+                load = Load(
+                    project_dir=project_dir,
+                    training_project_dir=training_project_dir)
+                simple_deploy_get = get.SimpleRun(
+                    test_cohorts_df=test_cohorts_df,
+                    max_train_tile_num=500,
+                    na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', "unknown", "na", "Na", "nA", "NA",
+                               "x"],
+                    train=load,
+                    evaluators=eval2function(evaluators_single, "single"),
+                )
+                multi_deploy_get = get.MultiTarget(
+                    simple_deploy_get,
+                    target_labels=[str(x.data(QtCore.Qt.UserRole)[0]) for x in
+                                   self.ui.targetlabels_deploy.selectedItems()],
+                    multi_target_evaluators=eval2function(evaluators_multi, "multi"),
+                )
+                do_experiment(
+                    project_dir=project_dir,
+                    get=multi_deploy_get
+                )
+
+            def execute_deploy_crossval():  # crossval
+                test_cohorts_df = cohort(
+                    tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
+                    clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
+                    slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx')
+                project_dir = project_dir
+                training_project_dir = training_project_dir
+                load = Load(
+                    project_dir=project_dir,
+                    training_project_dir=training_project_dir)
+                simple_deploy_get = get.SimpleRun(
+                    test_cohorts_df=test_cohorts_df,
+                    max_train_tile_num=500,
+                    na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', "unknown", "na", "Na", "nA", "NA",
+                               "x"],
+                    train=load,
+                    evaluators=eval2function(evaluators_single, "single"),
+                )
+                crossval_get = get.Crossval(
+                    simple_deploy_get,
+                    cohorts_df=test_cohorts_df,
+                    crossval_evaluators=eval2function(evaluators_crossval, "crossval"),
+                )
+
+                multi_deploy_get = get.MultiTarget(
+                    crossval_get,
+                    target_labels=[str(x.data(QtCore.Qt.UserRole)[0]) for x in
+                                   self.ui.targetlabels_deploy.selectedItems()],
+                    multi_target_evaluators=eval2function(evaluators_multi, "multi"),
+                )
+                do_experiment(
+                    project_dir=project_dir,
+                    get=multi_deploy_get
+                )
+
+            if not evaluators_crossval:
+                execute_deploy_multi()
+            else:
+                execute_deploy_crossval()
+
 
         
             
@@ -844,6 +1034,10 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.ui.group_evaluators_deploy.addItem("folds")
             self.ui.group_evaluators_deploy.addItems(self.targetlist_deploy)
 
+        elif self.ui.evaluators_deploy.currentText() in ["auroc","count","p_value","r2"]:
+            self.ui.group_evaluators_deploy.clear()
+            self.ui.group_evaluators_deploy.addItem("no grouping")
+            self.ui.group_evaluators_deploy.addItems(self.targetlist_deploy)
         else:
             self.ui.group_evaluators_deploy.clear()
             self.ui.group_evaluators_deploy.addItem("no grouping")
