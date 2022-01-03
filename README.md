@@ -1,7 +1,10 @@
+
+Deephist GUI 
 ### DeepMed - Graphical User Interface
 Here we share the user interface of DeepMed (Direct End-to-End Pipeline for Medical Imaging), which allows users to run the DeepMed through the application instead of running them via Python experiment script. The GUI is intended to easier use of the DeepMed pipeline and currently available to use basic functionalities of DeepMed. 
 
-## Requirements
+
+## 0. Requirements
 * CUDA-enabled NVIDIA GPU 
 * Python version >= 3.8
 * Pip
