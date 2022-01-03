@@ -29,6 +29,9 @@
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
      <widget class="QTabWidget" name="Tabs">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="font">
        <font>
         <kerning>false</kerning>
@@ -38,13 +41,16 @@
        <string/>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="iconSize">
        <size>
         <width>16</width>
         <height>16</height>
        </size>
+      </property>
+      <property name="tabBarAutoHide">
+       <bool>false</bool>
       </property>
       <widget class="QWidget" name="Deeplearn">
        <property name="accessibleName">
@@ -63,20 +69,6 @@
            <widget class="QLabel" name="label_6">
             <property name="text">
              <string>Mode Settings:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="13" column="4" colspan="2">
-           <widget class="QPushButton" name="addcohortlist_learn">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>add to list</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>icons/right-arrow.png</normaloff>icons/right-arrow.png</iconset>
             </property>
            </widget>
           </item>
@@ -137,32 +129,10 @@
             </property>
            </widget>
           </item>
-          <item row="20" column="3">
-           <widget class="QPushButton" name="add_target_learn">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
+          <item row="20" column="2">
+           <widget class="QCheckBox" name="checkTarget_learn">
             <property name="text">
-             <string>add target</string>
-            </property>
-           </widget>
-          </item>
-          <item row="23" column="0">
-           <widget class="QPushButton" name="stop_learn">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>stop</string>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>16</width>
-              <height>16</height>
-             </size>
+             <string/>
             </property>
            </widget>
           </item>
@@ -238,19 +208,6 @@
              <number>3</number>
             </property>
            </widget>
-          </item>
-          <item row="13" column="3">
-           <spacer name="horizontalSpacer_7">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
           </item>
           <item row="6" column="1">
            <widget class="QComboBox" name="choosemode_learn">
@@ -333,7 +290,7 @@
           <item row="18" column="0">
            <widget class="QLabel" name="label_19">
             <property name="text">
-             <string>choose targets:</string>
+             <string>Choose Target(s):</string>
             </property>
            </widget>
           </item>
@@ -344,50 +301,10 @@
             </property>
            </widget>
           </item>
-          <item row="14" column="4" colspan="2">
-           <widget class="QPushButton" name="del_list_learn">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>delete list</string>
-            </property>
-            <property name="icon">
-             <iconset>
-              <normaloff>icons/close.png</normaloff>icons/close.png</iconset>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>13</width>
-              <height>13</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item row="19" column="3">
-           <widget class="QPushButton" name="cohort_click_learn">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>train on subset</string>
-            </property>
-           </widget>
-          </item>
           <item row="13" column="0">
            <widget class="QLabel" name="label_9">
             <property name="text">
              <string>clini table</string>
-            </property>
-           </widget>
-          </item>
-          <item row="23" column="7">
-           <widget class="QPushButton" name="test_learn">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>test</string>
             </property>
            </widget>
           </item>
@@ -418,6 +335,13 @@
             </property>
            </widget>
           </item>
+          <item row="19" column="2">
+           <widget class="QCheckBox" name="checkSubset_learn">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
           <item row="8" column="6">
            <widget class="QLabel" name="label_5">
             <property name="enabled">
@@ -428,17 +352,73 @@
             </property>
            </widget>
           </item>
-          <item row="19" column="2">
-           <widget class="QCheckBox" name="checkSubset">
+          <item row="23" column="7">
+           <widget class="QPushButton" name="test_learn">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
             <property name="text">
-             <string/>
+             <string>test</string>
             </property>
            </widget>
           </item>
-          <item row="20" column="2">
-           <widget class="QCheckBox" name="checkTarget">
+          <item row="19" column="3">
+           <widget class="QPushButton" name="train_subset_learn">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
             <property name="text">
-             <string/>
+             <string>train on subset</string>
+            </property>
+           </widget>
+          </item>
+          <item row="20" column="3">
+           <widget class="QPushButton" name="add_target_learn">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+            <property name="text">
+             <string>add target</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="3">
+           <widget class="QPushButton" name="addcohortlist_learn">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+            <property name="text">
+             <string>add to list</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>icons/right-arrow.png</normaloff>icons/right-arrow.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="3">
+           <widget class="QPushButton" name="del_list_learn">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+            <property name="text">
+             <string>delete list</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>icons/close.png</normaloff>icons/close.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>13</width>
+              <height>13</height>
+             </size>
             </property>
            </widget>
           </item>
@@ -453,91 +433,76 @@
        <layout class="QHBoxLayout" name="horizontalLayout_6">
         <item>
          <layout class="QGridLayout" name="gridLayout_2">
-          <item row="9" column="0">
-           <widget class="QLabel" name="label">
+          <item row="19" column="7">
+           <widget class="QPushButton" name="test_deploy">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
             <property name="text">
-             <string>clini table</string>
+             <string>test</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_24">
+          <item row="20" column="2">
+           <widget class="QPushButton" name="run_deploy">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
             <property name="text">
-             <string>model path</string>
+             <string>run</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="0">
+           <widget class="QLabel" name="label_21">
+            <property name="text">
+             <string>slide table</string>
+            </property>
+           </widget>
+          </item>
+          <item row="12" column="2">
+           <widget class="QPushButton" name="choose_tiledir_deploy">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+            <property name="text">
+             <string>choose folder</string>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="0">
+           <widget class="QLabel" name="label_20">
+            <property name="text">
+             <string>Evaluators:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="4">
+           <widget class="QPushButton" name="add_eval_deploy">
+            <property name="text">
+             <string>add to list</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>icons/right-arrow.png</normaloff>icons/right-arrow.png</iconset>
             </property>
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="label_11">
+           <widget class="QLabel" name="label_24">
             <property name="text">
              <string>project directory</string>
             </property>
            </widget>
           </item>
-          <item row="14" column="0">
-           <widget class="QPushButton" name="stop_deploy">
-            <property name="enabled">
-             <bool>false</bool>
-            </property>
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
+          <item row="0" column="7">
+           <widget class="QLabel" name="label_15">
             <property name="text">
-             <string>stop</string>
+             <string>choose models:</string>
             </property>
            </widget>
           </item>
-          <item row="15" column="0">
-           <widget class="QPushButton" name="reset_deploy">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>reset</string>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="0">
-           <widget class="QLabel" name="label_22">
-            <property name="text">
-             <string>tile directory</string>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="1">
-           <widget class="QPushButton" name="clini_table_deploy">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>choose file</string>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="5" rowspan="3">
-           <widget class="QListWidget" name="cohortlist_deploy">
-            <property name="editTriggers">
-             <set>QAbstractItemView::AllEditTriggers</set>
-            </property>
-            <property name="selectionMode">
-             <enum>QAbstractItemView::MultiSelection</enum>
-            </property>
-            <property name="sortingEnabled">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="1">
-           <widget class="QPushButton" name="choose_slidetable_deploy">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>choose file</string>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="3">
+          <item row="12" column="4">
            <widget class="QPushButton" name="del_list_deploy">
             <property name="cursor">
              <cursorShape>PointingHandCursor</cursorShape>
@@ -557,92 +522,28 @@
             </property>
            </widget>
           </item>
-          <item row="13" column="0" colspan="2">
-           <widget class="QListWidget" name="targetlabels_deploy">
-            <property name="selectionMode">
-             <enum>QAbstractItemView::MultiSelection</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QPushButton" name="projectdir_deploy">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
+          <item row="3" column="2">
+           <widget class="QPushButton" name="savingpath_deploy">
             <property name="text">
-             <string>choose folder</string>
+             <string>choohe path</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_7">
+          <item row="12" column="0">
+           <widget class="QLabel" name="label_22">
             <property name="text">
-             <string>Settings:</string>
+             <string>tile directory</string>
             </property>
            </widget>
           </item>
-          <item row="15" column="1">
-           <widget class="QPushButton" name="run_deploy">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_11">
             <property name="text">
-             <string>run</string>
+             <string>model path</string>
             </property>
            </widget>
           </item>
-          <item row="3" column="1">
-           <widget class="QLabel" name="label_30">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="14" column="5">
-           <widget class="QPushButton" name="test_deploy">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>test</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QLabel" name="label_29">
-            <property name="text">
-             <string>Cohort settings:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="10" column="1">
-           <widget class="QPushButton" name="choose_tiledir_deploy">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>choose folder</string>
-            </property>
-           </widget>
-          </item>
-          <item row="15" column="5">
-           <widget class="QPushButton" name="advanced_deploy">
-            <property name="cursor">
-             <cursorShape>PointingHandCursor</cursorShape>
-            </property>
-            <property name="text">
-             <string>advanced settings</string>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="0">
-           <widget class="QLabel" name="label_21">
-            <property name="text">
-             <string>slide table</string>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="3">
+          <item row="11" column="4">
            <widget class="QPushButton" name="addlist_deploy">
             <property name="enabled">
              <bool>true</bool>
@@ -674,41 +575,27 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="1">
-           <widget class="QLabel" name="label_31">
+          <item row="1" column="2">
+           <widget class="QPushButton" name="projectdir_deploy">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
             <property name="text">
-             <string/>
+             <string>choose folder</string>
             </property>
            </widget>
           </item>
-          <item row="12" column="0">
-           <widget class="QLabel" name="label_15">
+          <item row="20" column="0">
+           <widget class="QPushButton" name="reset_deploy">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
             <property name="text">
-             <string>choose targets:</string>
+             <string>reset</string>
             </property>
            </widget>
           </item>
-          <item row="6" column="2">
-           <spacer name="horizontalSpacer_6">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item row="11" column="0" colspan="6">
-           <widget class="Line" name="line_5">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="4">
+          <item row="8" column="6">
            <spacer name="horizontalSpacer_3">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -721,15 +608,66 @@
             </property>
            </spacer>
           </item>
-          <item row="6" column="5">
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_18">
+            <property name="text">
+             <string>saving path</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="7" rowspan="3">
+           <widget class="QListWidget" name="cohortlist_deploy">
+            <property name="editTriggers">
+             <set>QAbstractItemView::AllEditTriggers</set>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::MultiSelection</enum>
+            </property>
+            <property name="sortingEnabled">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="19" column="1">
+           <widget class="QCheckBox" name="check_Subset_deploy">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>clini table</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="7">
            <widget class="QLabel" name="label_23">
             <property name="text">
              <string>cohort list:</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="1">
-           <widget class="QPushButton" name="choose_model_deploy">
+          <item row="1" column="3">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>   -or-</string>
+            </property>
+           </widget>
+          </item>
+          <item row="20" column="7">
+           <widget class="QPushButton" name="advanced_deploy">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+            <property name="text">
+             <string>advanced settings</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="2">
+           <widget class="QPushButton" name="choose_slidetable_deploy">
             <property name="cursor">
              <cursorShape>PointingHandCursor</cursorShape>
             </property>
@@ -738,10 +676,210 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="0" colspan="6">
+          <item row="2" column="2">
+           <widget class="QPushButton" name="choose_model_deploy">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+            <property name="text">
+             <string>choose path</string>
+            </property>
+           </widget>
+          </item>
+          <item row="17" column="4">
+           <widget class="QPushButton" name="del_eval_list_deploy">
+            <property name="text">
+             <string>delete list</string>
+            </property>
+            <property name="icon">
+             <iconset>
+              <normaloff>icons/close.png</normaloff>icons/close.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>13</width>
+              <height>13</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="2">
+           <widget class="QPushButton" name="clini_table_deploy">
+            <property name="cursor">
+             <cursorShape>PointingHandCursor</cursorShape>
+            </property>
+            <property name="text">
+             <string>choose file</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>Settings:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="0" colspan="8">
+           <widget class="Line" name="line_5">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="3">
+           <spacer name="horizontalSpacer_6">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="7" column="0" colspan="8">
            <widget class="Line" name="line_4">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_29">
+            <property name="text">
+             <string>Cohort settings:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="7" rowspan="3">
+           <widget class="QListWidget" name="evaluator_list_deploy">
+            <property name="editTriggers">
+             <set>QAbstractItemView::NoEditTriggers</set>
+            </property>
+            <property name="showDropIndicator" stdset="0">
+             <bool>false</bool>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::NoSelection</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="17" column="2">
+           <widget class="QComboBox" name="group_evaluators_deploy">
+            <item>
+             <property name="text">
+              <string>no grouping</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>PATIENT</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="16" column="2">
+           <widget class="QComboBox" name="evaluators_deploy">
+            <item>
+             <property name="text">
+              <string>ROC</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>auroc</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>F1</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>TopTiles</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Confusion Matrix</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>AggregateStats</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>p value</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>count</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="16" column="0">
+           <widget class="QLabel" name="label_26">
+            <property name="text">
+             <string>Evaluator</string>
+            </property>
+           </widget>
+          </item>
+          <item row="17" column="0">
+           <widget class="QLabel" name="label_27">
+            <property name="text">
+             <string>group by</string>
+            </property>
+           </widget>
+          </item>
+          <item row="19" column="2">
+           <widget class="QPushButton" name="deploy_subset">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>deploy on subset</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="4">
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item row="4" column="2">
+           <widget class="QLabel" name="label_30">
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="7" rowspan="4">
+           <widget class="QListWidget" name="targetlabels_deploy">
+            <property name="selectionMode">
+             <enum>QAbstractItemView::MultiSelection</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="14" column="7">
+           <widget class="QLabel" name="label_31">
+            <property name="text">
+             <string>evaluator list:</string>
             </property>
            </widget>
           </item>
@@ -766,11 +904,11 @@
           <item row="0" column="0" colspan="3">
            <widget class="QTabWidget" name="tabWidget">
             <property name="currentIndex">
-             <number>1</number>
+             <number>0</number>
             </property>
             <widget class="QWidget" name="vis_plots">
              <attribute name="title">
-              <string>Images</string>
+              <string>Top Tiles</string>
              </attribute>
              <widget class="QWidget" name="gridLayoutWidget">
               <property name="geometry">
@@ -917,7 +1055,7 @@
             </widget>
             <widget class="QWidget" name="vis_tables">
              <attribute name="title">
-              <string>Table</string>
+              <string>Confusion Matrix</string>
              </attribute>
              <widget class="QTableView" name="table_vis">
               <property name="geometry">
@@ -942,6 +1080,16 @@
                <string>choose table</string>
               </property>
              </widget>
+            </widget>
+            <widget class="QWidget" name="tab">
+             <attribute name="title">
+              <string>Roc curves</string>
+             </attribute>
+            </widget>
+            <widget class="QWidget" name="tab_2">
+             <attribute name="title">
+              <string>Summary</string>
+             </attribute>
             </widget>
            </widget>
           </item>
@@ -999,7 +1147,7 @@
      <x>0</x>
      <y>0</y>
      <width>916</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuhello">
