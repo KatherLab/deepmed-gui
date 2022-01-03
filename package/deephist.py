@@ -108,6 +108,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.ui.savingpath_deploy.clicked.connect(self.open_savingpath_deploy)
         self.ui.add_eval_deploy.clicked.connect(self.add_eval_clicked_deploy)
         self.ui.del_eval_list_deploy.clicked.connect(self.del_list_clicked_deploy)
+        self.ui.eval_type_deploy.currentIndexChanged.connect(self.evaluatorsmode_clicked_deploy)
         ###########
 
         # Values Visualize
@@ -487,10 +488,12 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
 
     def click_checkTarget_learn(self):
-        self.ui.add_target_learn.setEnabled(self.ui.checkTarget_learn.checkState())
+        ...
+        #self.ui.add_target_learn.setEnabled(self.ui.checkTarget_learn.checkState())  # TODO turned off
 
     def click_checkSubset_learn(self):
-        self.ui.train_subset_learn.setEnabled(self.ui.checkSubset_learn.checkState())
+        ...
+        #self.ui.train_subset_learn.setEnabled(self.ui.checkSubset_learn.checkState())  # TODO turned off
 
 
 
@@ -843,6 +846,11 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 data = [f"{eval}", '', eval_type]
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
+            elif eval == "AggregateStats":
+                item = QtWidgets.QListWidgetItem(f"{eval}(label=\'target\')   ({eval_type})")
+                data = [f"{eval}(label=\'target\')", '', eval_type]
+                item.setData(QtCore.Qt.UserRole, data)
+                self.ui.evaluator_list_deploy.addItem(item)
             else:
                 item = QtWidgets.QListWidgetItem(f"{eval}   ({eval_type})")
                 data = [f"{eval}()", '', eval_type]
@@ -1020,11 +1028,33 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             #self.threadpool.start(self.worker)
             Execute_test2()
 
+    def evaluatorsmode_clicked_deploy(self):
+        print("clicked")
+        self.ui.evaluators_deploy.clear()
+        print(self.ui.eval_type_deploy.currentText())
+        if self.ui.eval_type_deploy.currentText() == "single":
+
+            single_cross_evaluators = ["auroc","count","p_value","ConfusionMatrix","F1","Heatmap","Roc","TopTiles"]
+            self.ui.evaluators_deploy.addItems(single_cross_evaluators)
+        elif self.ui.eval_type_deploy.currentText() == "multi":
+            self.ui.evaluators_deploy.clear()
+            multi_cross_evaluators =  ["AggregateStats","auroc","count","p_value","ConfusionMatrix","F1","Heatmap","Roc","TopTiles"]
+            self.ui.evaluators_deploy.addItems(multi_cross_evaluators)
+        else:
+            self.ui.evaluators_deploy.clear()
+            cross_evaluators = ["AggregateStats", "auroc", "count", "p_value", "ConfusionMatrix", "F1", "Heatmap",
+                                      "Roc", "TopTiles"]
+            self.ui.evaluators_deploy.addItems(cross_evaluators)
+
+
     def click_checkSubset_deploy(self):
-        self.ui.deploy_subset.setEnabled(self.ui.check_Subset_deploy.checkState())
+        ...
+        #self.ui.deploy_subset.setEnabled(self.ui.check_Subset_deploy.checkState()) # TODO turned off 
+
     def evaluator_clicked_deploy(self):
         if self.ui.evaluators_deploy.currentText() == "AggregateStats":
             self.ui.group_evaluators_deploy.clear()
+            self.ui.group_evaluators_deploy.addItem("no grouping")
             self.ui.group_evaluators_deploy.addItem("folds")
             self.ui.group_evaluators_deploy.addItems(self.targetlist_deploy)
 
@@ -1036,6 +1066,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             self.ui.group_evaluators_deploy.clear()
             self.ui.group_evaluators_deploy.addItem("no grouping")
             self.ui.group_evaluators_deploy.addItems(self.targetlist_deploy)
+
     def count_up_vis(self):
         n = self.ui.imgcounter_vis.intValue()
         self.ui.imgcounter_vis.display(n + 1)
