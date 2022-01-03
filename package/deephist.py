@@ -854,12 +854,12 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 self.ui.evaluator_list_deploy.addItem(item)
             elif eval in ["ConfusionMatrix","F1","Heatmap","Roc","TopTiles"]:
                 item = QtWidgets.QListWidgetItem(f"Grouped({eval}(), by= '{groupby}')   ({eval_type})")
-                data = [f"Grouped({eval}(), by= \'{groupby}\')", groupby,eval_type]
+                data = [f"Grouped({eval}(), by= '{groupby}')", groupby,eval_type]
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
             else:
                 item = QtWidgets.QListWidgetItem(f"AggregateStats(label='{groupby}', over=['{groupby}'])")
-                data = [f"AggregateStats(label='target', over=['{groupby}'])", groupby,eval_type]
+                data = [f"AggregateStats(label='{groupby}', over=['{groupby}'])", groupby,eval_type]
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
 
@@ -916,6 +916,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
                 if evallist == []:
                     print("Error. No evaluations given.")
+                    return []
                 else:
                     outputfunc = []
                     for eval in evallist:
@@ -960,6 +961,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 )
 
             def execute_deploy_crossval():  # crossval
+                print("run crossval")
                 test_cohorts_df = cohort(
                     tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
                     clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
@@ -969,25 +971,30 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 load = Load(
                     project_dir=project_dir,
                     training_project_dir=training_project_dir)
+                
+                simpletarg = [TopTiles(), Grouped(auroc), Grouped(Roc()), Grouped(count), Grouped(p_value)] #eval2function(evaluators_single, "single")
+                multitarg = [AggregateStats(label='target'),auroc] # eval2function(evaluators_multi, "multi")
+                crossvaltag = [AggregateStats(label='fold'), TopTiles(), Grouped(Roc())] #eval2function(evaluators_crossval, "crossval")
+                
                 simple_deploy_get = get.SimpleRun(
                     test_cohorts_df=test_cohorts_df,
                     max_train_tile_num=500,
                     na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', "unknown", "na", "Na", "nA", "NA",
                                "x"],
                     train=load,
-                    evaluators=eval2function(evaluators_single, "single"),
+                    evaluators=simpletarg,
                 )
                 crossval_get = get.Crossval(
                     simple_deploy_get,
                     cohorts_df=test_cohorts_df,
-                    crossval_evaluators=eval2function(evaluators_crossval, "crossval"),
+                    crossval_evaluators=crossvaltag,
                 )
 
                 multi_deploy_get = get.MultiTarget(
                     crossval_get,
                     target_labels=[str(x.data(QtCore.Qt.UserRole)[0]) for x in
                                    self.ui.targetlabels_deploy.selectedItems()],
-                    multi_target_evaluators=eval2function(evaluators_multi, "multi"),
+                    multi_target_evaluators=multitarg,
                 )
                 do_experiment(
                     project_dir=project_dir,
