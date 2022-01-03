@@ -964,8 +964,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
                     clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
                     slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx')
-                project_dir = project_dir
-                training_project_dir = training_project_dir
+                project_dir = 'C:/Users/tseibel/Desktop/dedeploy_crossval'
+                training_project_dir = 'C:/Users/tseibel/Desktop/tetestfolder_crossval'
                 load = Load(
                     project_dir=project_dir,
                     training_project_dir=training_project_dir)
