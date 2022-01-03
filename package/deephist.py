@@ -72,7 +72,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         ###########
 
         # Values Deploy
-        self.ui.group_evaluators_deploy.clear()# TODO remove afterwards
+        
         self.ui.evaluators_deploy.currentIndexChanged.connect(self.evaluator_clicked_deploy)
         self.project_dir_deploy = ""  # path for project directory
         self.batch_size_deploy = self.batch_size_learn  #
@@ -834,8 +834,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
             elif eval == "AggregateStats":
-                item = QtWidgets.QListWidgetItem(f"{eval}(label=\'target\')   ({eval_type})")
-                data = [f"{eval}(label=\'target\')", '', eval_type]
+                item = QtWidgets.QListWidgetItem(f"{eval}(label='target')   ({eval_type})")
+                data = [f"{eval}(label='target')", '', eval_type]
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
             else:
@@ -848,18 +848,18 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         else:
 
             if eval in ["auroc", "count", "p_value", "r2"]:
-                item = QtWidgets.QListWidgetItem(f"Grouped({eval}, by= \'{groupby}\')   ({eval_type})")
-                data = [f"Grouped({eval}, by= \'{groupby}\')", groupby,eval_type]
+                item = QtWidgets.QListWidgetItem(f"Grouped({eval}, by= '{groupby}')   ({eval_type})")
+                data = [f"Grouped({eval}, by= '{groupby}')", groupby,eval_type]
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
             elif eval in ["ConfusionMatrix","F1","Heatmap","Roc","TopTiles"]:
-                item = QtWidgets.QListWidgetItem(f"Grouped({eval}(), by= \'{groupby}\')   ({eval_type})")
+                item = QtWidgets.QListWidgetItem(f"Grouped({eval}(), by= '{groupby}')   ({eval_type})")
                 data = [f"Grouped({eval}(), by= \'{groupby}\')", groupby,eval_type]
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
             else:
-                item = QtWidgets.QListWidgetItem(f"AggregateStats(label='target', over=[{eval_type}])")
-                data = [f"AggregateStats(label='target', over=[{eval_type}])", groupby,eval_type]
+                item = QtWidgets.QListWidgetItem(f"AggregateStats(label='{groupby}', over=['{groupby}'])")
+                data = [f"AggregateStats(label='target', over=['{groupby}'])", groupby,eval_type]
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
 
