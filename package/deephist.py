@@ -511,7 +511,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         for root, dirs, files in os.walk(path, topdown=False):
 
             for name in files:
-                pat = os.path.join(root, name).split('/')
+                pat = os.path.join(root, name).split('\\')
 
                 if pat[-1] == 'export.pkl':
 
@@ -592,30 +592,17 @@ class Mainwindow_con(QtWidgets.QMainWindow):
     def run_deploy_click(self):
 
         # TODO evaluators to readable function
-        def eval2function(evallist,evaltype):
+        def eval2function(evallist, evaltype):
 
             if evallist == []:
                 print("Error. No evaluations given.")
             else:
-                if evaltype == 'single':
-                    outputfunc = "evaluators = ["
-                    for eval in evallist:
-                        outputfunc += str(eval)+","
-                    outputfunc += "]"
-                    return exec(outputfunc)
-
-                elif evaltype == 'multi':
-                    outputfunc = "multi_target_evaluators = ["
-                    for eval in evallist:
-                        outputfunc += str(eval)+","
-                    outputfunc += "]"
-                    return exec(outputfunc)
-                else:
-                    outputfunc = "crossval_evaluators = ["
-                    for eval in evallist:
-                        outputfunc += str(eval) + ","
-                    outputfunc += "]"
-                    return exec(outputfunc)
+                outputfunc = []
+                for eval in evallist:
+                    stringvalue = "self.newval = " + str(eval)
+                    exec(stringvalue)
+                    outputfunc.append(self.newval)
+                return outputfunc
 
         def execute_deploy_multi():  # single and multi
 
@@ -871,8 +858,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
             else:
-                item = QtWidgets.QListWidgetItem(f"AggregateStats(label=\'{groupby}\')   ({eval_type})")
-                data = [f"Grouped({eval}(), by= \'{groupby}\')", groupby,eval_type]
+                item = QtWidgets.QListWidgetItem(f"AggregateStats(label='target', over=[{eval_type}])")
+                data = [f"AggregateStats(label='target', over=[{eval_type}])", groupby,eval_type]
                 item.setData(QtCore.Qt.UserRole, data)
                 self.ui.evaluator_list_deploy.addItem(item)
 
@@ -1049,7 +1036,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def click_checkSubset_deploy(self):
         ...
-        #self.ui.deploy_subset.setEnabled(self.ui.check_Subset_deploy.checkState()) # TODO turned off 
+        #self.ui.deploy_subset.setEnabled(self.ui.check_Subset_deploy.checkState()) # TODO turned off
 
     def evaluator_clicked_deploy(self):
         if self.ui.evaluators_deploy.currentText() == "AggregateStats":
