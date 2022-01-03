@@ -910,8 +910,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                                 self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[2] == 'multi']
             evaluators_crossval = [self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[0] for idx in
                                    range(self.ui.evaluator_list_deploy.count()) if
-                                   self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[
-                                       2] == 'cross_validation']
+                                   self.ui.evaluator_list_deploy.item(idx).data(QtCore.Qt.UserRole)[2] == 'cross_validation']
         
             def eval2function(evallist, evaltype):
 
@@ -923,6 +922,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                         stringvalue = "self.newval = "+ str(eval)
                         exec(stringvalue)
                         outputfunc.append(self.newval)
+                    print(outputfunc)
                     return outputfunc
 
             def execute_deploy_multi():  # single and multi
