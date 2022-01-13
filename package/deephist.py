@@ -269,7 +269,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
 
-            logfilename = f'./logfiles_gui/learn{datetime.now().hour}_{datetime.now().minute}_{datetime.now().second}.txt'
+            logfilename = f'./learn{datetime.now().hour}_{datetime.now().minute}_{datetime.now().second}.txt'
             print(logfilename)
             f = open(logfilename,'w+')
             for line in text:
@@ -966,8 +966,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     tiles_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-TESTSET-DEEPMED-TILES/BLOCKS_NORM_MACENKO',
                     clini_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_CLINI.xlsx',
                     slide_path='C:/Users/tseibel/Desktop/test/TCGA-BRCA-E2_SLIDE.xlsx')
-                project_dir = 'C:/Users/tseibel/Desktop/dedeploy_crossval'
-                training_project_dir = 'C:/Users/tseibel/Desktop/tetestfolder_crossval'
+                project_dir = 'C:/Users/tseibel/Desktop/deploy_crossval'
+                training_project_dir = 'C:/Users/tseibel/Desktop/crossfoldtestfolder'
                 load = Load(
                     project_dir=project_dir,
                     training_project_dir=training_project_dir)
@@ -977,7 +977,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 crossvaltag = [AggregateStats(label='fold'), TopTiles(), Grouped(Roc())] #eval2function(evaluators_crossval, "crossval")
                 
                 simple_deploy_get = get.SimpleRun(
-                    test_cohorts_df=test_cohorts_df,
+                    
                     max_train_tile_num=500,
                     na_values=['NA', 'Not Available', 'Equivocal', 'Not Performed', "unknown", "na", "Na", "nA", "NA",
                                "x"],
