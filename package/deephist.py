@@ -605,6 +605,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 return outputfunc
 
         def execute_deploy_multi():  # single and multi
+           
 
             test_cohorts_df =pd.concat([
                         cohort(tile_path, clin_path, slid_path)
@@ -617,7 +618,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 training_project_dir=training_project_dir)
             simple_deploy_get = get.SimpleRun(
                 test_cohorts_df=test_cohorts_df,
-                max_train_tile_num=str(self.max_tile_num_learn),
+                max_train_tile_num=int(self.max_tile_num_learn),
                 na_values=str(self.na_values_learn),
                 train=load,
                 evaluators=eval2function(evaluators_single,"single"),
@@ -633,9 +634,10 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     )
 
         def execute_deploy_crossval():  #crossval
+            print(self.cohortlist_deploy)
             test_cohorts_df = pd.concat([
                 cohort(tile_path, clin_path, slid_path)
-                for tile_path, clin_path, slid_path in self.cohortlist_deploy]
+                for tile_path, clin_path, slid_path in cohortlist_deploy]
             )
             project_dir = self.savingpath_deploy
             training_project_dir = self.project_dir_deploy
@@ -644,7 +646,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 training_project_dir=training_project_dir)
             simple_deploy_get = get.SimpleRun(
                 test_cohorts_df=test_cohorts_df,
-                max_train_tile_num=str(self.max_tile_num_learn),
+                max_train_tile_num=int(self.max_tile_num_learn),
                 na_values=str(self.na_values_learn),
                 train=load,
                 evaluators=eval2function(evaluators_single, "single"),
@@ -998,7 +1000,9 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 )
                 do_experiment(
                     project_dir=project_dir,
-                    get=multi_deploy_get
+                    get=multi_deploy_get,
+                    devices={'cuda:0': 4},
+                num_concurrent_tasks=0,
                 )
 
             if not evaluators_crossval:
