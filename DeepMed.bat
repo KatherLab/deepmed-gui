@@ -1,6 +1,6 @@
 @ECHO OFF
 dir
-CALL  env\Scripts\activate  
+CALL  %~dp0env\Scripts\activate  
 
 python main.py
 PAUSE
