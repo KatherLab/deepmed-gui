@@ -1,7 +1,8 @@
 import sys
 from PyQt5 import QtWidgets, QtCore
 
-
+from PyQt5.QtWidgets import QTreeWidgetItem
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import QThreadPool
 from PyQt5.QtCore import pyqtSlot
 from package.mainwindow import Ui_gui_histo_main
@@ -32,7 +33,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.patmasttab_path_learn = " "  # path for clini table
         self.folderpath_learn = " "  # path for saving path, where the project should be saved
         self.tilepath_learn = " "  # path for tiles
-        #self.advanced_values_learn = [3, 10, 100, 50, 0, 4, ['NA', 'Not Available', 'Equivocal', 'Not Performed', 'unknown']]  # HARDCODED returned values from advanced settings. # TODO delete if not needed anymore
         self.advanced_values_learn = 0  # advanced settings.
         self.subgroup_values_learn = ["",""]  # [group,subgroup]
         self.get_adv_settings()  # if self.advanced_values_learn = 0 fetches values from advanced ui
@@ -85,7 +85,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.cohortlist_deploy = []  # list of chosen cohorts, each cohort is a list containing tile, clini , slide path
         self.cohort_name_list_deploy = []  # list of cohort names
         self.targets_deploy = self.ui.targetlabels_deploy.selectedItems()  # targets chosen for deployment
-        self.advanced_values_deploy = [3, 10, 100, 50, 0, 4, ['NA', 'Not Available', 'Equivocal', 'Not Performed', 'unknown']]  # TODO add advanced settings to deploy
+        self.advanced_values_deploy = [3, 10, 128, 500, 0, 8, ['NA', 'Not Available', 'Equivocal', 'Not Performed', 'unknown']]  # TODO add advanced settings to deploy
         self.savingpath_deploy = ""
         self.targetlist_deploy = [""]
         #self.loader()
@@ -115,6 +115,8 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         self.project_dir_vis =""
         # Events Visualize
         self.ui.choose_path_vis.clicked.connect(self.choose_path_clicked_vis)
+        self.ui.foldertree_vis.itemClicked.connect(self.file_from_tree_clicked_vis)
+
         #self.ui.nextIm_vis.clicked.connect(self.count_up_vis)
         #self.ui.prevIm_vis.clicked.connect(self.count_down_vis)
         ###########
@@ -186,7 +188,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     target_labels=[str(x.text()) for x in self.ui.choosetarg_learn.selectedItems()],
                     resample_each_epoch=True,# TODO resample_epoch still hardcoded
                     valid_frac=int(str(self.ui.validratio_learn.text())[:-1]) / 100,
-                    na_values=str(self.na_values_learn),  # TODO add na_values to advanced settings
+                    na_values=str(self.na_values_learn),  #
                     ),
                 train=Train(
                     batch_size=int(str(self.batch_size_learn)),
@@ -253,7 +255,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 f"Max tile num: {str(self.max_tile_num_learn)}",
                 f"GPU Num: {str(self.gpu_num_learn)}",
                 f"na Values: {str(self.na_values_learn)}",
-                f"Chosen subgroup: {str(self.subgroup_values_learn)}",  # TODO print chosen subgroups
+                f"Chosen subgroup: {str(self.subgroup_values_learn)}",
                 f"Number of Workers : {self.num_workers_learn}",
                 f"concurrent tasks : {self.concurrent_tasks_learn}",
 
@@ -269,14 +271,14 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
 
-            logfilename = f'./learn{datetime.now().hour}_{datetime.now().minute}_{datetime.now().second}.txt'
-            print(logfilename)
-            f = open(logfilename,'w+')
-            for line in text:
-                f.write(line+'\n')
-            f.close()
+            try:
+                logfilename = f'./learn{datetime.now().hour}_{datetime.now().minute}_{datetime.now().second}logfile.txt'
+                print(logfilename)
+                f = open(logfilename, 'w+')
+                for line in text:
+                    f.write(line + '\n')
+                f.close()
 
-            if True:  # TODO if everything is running, change to try, return specific error in except
                 if self.ui.choosemode_learn.currentText() == 'test/train':
                     self.worker = Worker(execute_traintest_learn)  # Any other args, kwargs are passed to the run function
                     # Execute
@@ -290,12 +292,14 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 else:
                     raise ValueError(self.mode_learn)
 
-            """except:
+
+            except Exception as e:
+                print(e)
                 # if not working raise dialog
                 QtWidgets.QMessageBox.critical(self, "Error","Oh no!  \n Something went wrong ")
 
             finally:
-                print("cont'd")"""
+                print("cont'd")
 
     def reset_click_learn(self):
 
@@ -402,13 +406,14 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         slide_path = 'C:/Users/tseibel/Desktop/test/TCGA-BRCA-A2_SLIDE.xlsx'
         target_label = ['ER Status By IHC', 'Cancer Type Detailed', 'Neoplasm Histologic Type Name',
                         'Fraction Genome Altered']
-        cohorts_df = cohort(
-            tiles_path,
-            clini_path,
-            slide_path
-        )
+
 
         def Execute_test():
+            cohorts_df = cohort(
+                tiles_path,
+                clini_path,
+                slide_path
+            )
             do_experiment(
                 project_dir=project_dir,
                 get=get.MultiTarget(
@@ -445,7 +450,15 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             # Execute
             self.threadpool.start(self.worker)
             """
-            Execute_test()
+            try:
+                Execute_test()
+            except Exception as e:
+                print(e)
+                # if not working raise dialog
+                QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")
+
+            finally:
+                print("cont'd")
 
     def stop_clicked_learn(self):
         msgBox = QtWidgets.QMessageBox()
@@ -591,7 +604,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
     def run_deploy_click(self):
 
-        # TODO evaluators to readable function
+
         def eval2function(evallist, evaltype):
 
             if evallist == []:
@@ -605,7 +618,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 return outputfunc
 
         def execute_deploy_multi():  # single and multi
-           
 
             test_cohorts_df =pd.concat([
                         cohort(tile_path, clin_path, slid_path)
@@ -634,7 +646,6 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     )
 
         def execute_deploy_crossval():  #crossval
-            print(self.cohortlist_deploy)
             test_cohorts_df = pd.concat([
                 cohort(tile_path, clin_path, slid_path)
                 for tile_path, clin_path, slid_path in cohortlist_deploy]
@@ -645,7 +656,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                 project_dir=project_dir,
                 training_project_dir=training_project_dir)
             simple_deploy_get = get.SimpleRun(
-                test_cohorts_df=test_cohorts_df,
+
                 max_train_tile_num=int(self.max_tile_num_learn),
                 na_values=str(self.na_values_learn),
                 train=load,
@@ -719,8 +730,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
 
         print(*text, sep='\n')
-        #evaluator_func =  ",".join(evaluators)
-        #exec(f"evaluators_deploy =  [{evaluator_func}]  # this can be used with exec to insert into deepmed")
+
         msgBox = QtWidgets.QMessageBox()
         msgBox.setText("Are you sure you want to run the deploy?")
         msgBox.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
@@ -728,8 +738,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if returnValue == QtWidgets.QMessageBox.Ok:
             print('OK clicked')
 
-            if True:  # TODO change to try when done
-
+            try:
                 if not evaluators_crossval :# if no crossval evaluation was chosen do regular deployment
                     self.worker = Worker(execute_deploy_multi)  # Any other args, kwargs are passed to the run function
                     # Execute
@@ -740,15 +749,13 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                         execute_deploy_crossval)  # Any other args, kwargs are passed to the run function
                     # Execute
                     self.threadpool.start(self.worker)
-            if False:
-                try:
-                    ...
-                except (ValueError, Exception):
-                    # if not working raise dialog
-                    QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")#
+            except Exception as e:
+                print(e)
+                # if not working raise dialog
+                QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")#
 
-                finally:
-                    print("cont'd")
+            finally:
+                print("cont'd")
 
     def reset_deploy_click(self):
         self.slidmasttab_path_deploy = " "
@@ -1002,7 +1009,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
                     project_dir=project_dir,
                     get=multi_deploy_get,
                     devices={'cuda:0': 4},
-                num_concurrent_tasks=0,
+                    num_concurrent_tasks=0,
                 )
 
             if not evaluators_crossval:
@@ -1024,8 +1031,15 @@ class Mainwindow_con(QtWidgets.QMainWindow):
             #self.worker = Worker(Execute_test)  # Any other args, kwargs are passed to the run function
             # Execute
             #self.threadpool.start(self.worker)
-            Execute_test2()
+            try:
+                Execute_test2()
+            except Exception as e:
+                print(e)
+                # if not working raise dialog
+                QtWidgets.QMessageBox.critical(self, "Error", "Oh no!  \n Something went wrong ")  #
 
+            finally:
+                print("cont'd")
     def evaluatorsmode_clicked_deploy(self):
         print("clicked")
         self.ui.evaluators_deploy.clear()
@@ -1074,14 +1088,33 @@ class Mainwindow_con(QtWidgets.QMainWindow):
         if n > 0:
             self.ui.imgcounter_vis.display(n - 1)
 
+    def load_project_structure(self, startpath, tree):
+        """
+        Load Project structure tree
+        :param startpath:
+        :param tree:
+        :return:
+        """
+
+        for element in os.listdir(startpath):
+            path_info = startpath + "/" + element
+            parent_itm = QTreeWidgetItem(tree, [os.path.basename(element)])
+            if os.path.isdir(path_info):
+                self.load_project_structure(path_info, parent_itm)
+                parent_itm.setIcon(0, QIcon('assets/folder.ico'))
+            else:
+                parent_itm.setIcon(0, QIcon('assets/file.ico'))
+
+
     def choose_path_clicked_vis(self):
         path = QtWidgets.QFileDialog.getExistingDirectory(self, r"\home")
-
+        print(path)
+        #path = r"/Users/tobiasseibel/Desktop/deployfolder_gui"
 
         if path != ('', ''):
             self.project_dir_vis = path
 
-        self.ui.target_list_vis.clear()
+
 
         pltf = platform.system()  # to fix probems between different platforms
         if pltf == 'Darwin':
@@ -1097,67 +1130,40 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
             self.ui.logs_vis.setScene(scene)
             self.ui.logs_vis.show()
-        targets = next(os.walk(path))[1]
-        self.ui.target_list_vis.clear()
-
-
-        for target in targets:
-            if not os.path.exists(str(path+target+'fold_0')):
-                fold = False
-                folderpath = path + r"/" + target
-                data = [target, fold, folderpath]
-
-                item = QtWidgets.QListWidgetItem(target)
-                item.setData(QtCore.Qt.UserRole, data)
-                self.ui.target_list_vis.addItem(item)
-            else:
-                fold = True
-
-                folderpath = path + r"/" + target
-                folds = next(os.walk(folderpath))[1]
-
-                data = [target, len(folds), folderpath]
-
-                item = QtWidgets.QListWidgetItem(target)
-                item.setData(QtCore.Qt.UserRole, data)
-                self.ui.target_list_vis.addItem(item)
-        """
-        for root, dirs, files in os.walk(path, topdown=False):  # Do not change topdown from False
-            print(f"root is {root}")
-            print(f"dirs is {dirs}")
-            for name in files:
-                pat = os.path.join(root, name).split('/')
-
-
-                
-                if pat[-1] == 'export.pkl':
-                    print("contains export.pkl")
-                    if 'fold' not in pat[-2]:
-                        print('nofold')
-                        name = pat[-2]
-                        fold = False
-                        path = '/'.join(pat[:-1])
-                        print("oi")
-                        data = [name, fold, path]
-                        item = QtWidgets.QListWidgetItem(name)
-                        item.setData(QtCore.Qt.UserRole, data)
-                        self.ui.target_list_vis.addItem(item)
-                    elif 'fold_0' in pat[-2]:
-                        print('fold')
-                        # fold!
-                        name = pat[-3]
-                        fold = True
-                        path = '/'.join(pat[:-2])
-
-                        data = [name, fold, path]
-                        item = QtWidgets.QListWidgetItem(name + '(k-fold)')
-                        item.setData(QtCore.Qt.UserRole, data)
-                        self.ui.target_list_vis.addItem(item)
-                    """
 
 
 
+        self.load_project_structure(path, self.ui.foldertree_vis)
 
+
+
+    def getParentPath(self,item):
+        def getParent(item,outstring):
+            if item.parent() is None:
+                return outstring
+
+            outstring = item.parent().text(0) + "/" + outstring
+            return getParent(item.parent(),outstring)
+
+        output = getParent(item,item.text(0))
+        return output
+
+    def file_from_tree_clicked_vis(self):
+        clicked_file = self.ui.foldertree_vis.currentItem()  #
+
+        name = clicked_file.text(0)
+        path = self.project_dir_vis + "/" + self.getParentPath(clicked_file)
+
+        if name.endswith(".svg"):
+            self.ui.image_vis.setPixmap(QIcon(path).pixmap(self.ui.image_vis.size()))
+
+        elif name.endswith(".csv") :
+            print(path)
+            df = pd.read_csv(path)
+            model = DataFrameModel(df.iloc[: , :10].head(50))
+            print(df.to_string())
+            self.ui.table_vis.setModel(model)
+            print("finished")
 
 
 
@@ -1491,8 +1497,14 @@ class Worker(QtCore.QRunnable):
     @pyqtSlot()
     def run(self):
         """ Initialise the runner function with passed args, kwargs."""
-        self.fn(*self.args, **self.kwargs)
+        try:
+            self.fn(*self.args, **self.kwargs)
+        except Exception as e:
+            print(e)
+            # if not working raise dialog
 
+        finally:
+            print("cont'd")
 
 #####
 # end
@@ -1547,3 +1559,65 @@ def plotter(self):
         self.ui.graph_autoDL.setScene(scene)
         self.ui.graph_autoDL.show()
 """
+
+class DataFrameModel(QtCore.QAbstractTableModel):
+    DtypeRole = QtCore.Qt.UserRole + 1000
+    ValueRole = QtCore.Qt.UserRole + 1001
+
+    def __init__(self, df=pd.DataFrame(), parent=None):
+        super(DataFrameModel, self).__init__(parent)
+        self._dataframe = df
+
+    def setDataFrame(self, dataframe):
+        self.beginResetModel()
+        self._dataframe = dataframe.copy()
+        self.endResetModel()
+
+    def dataFrame(self):
+        return self._dataframe
+
+    dataFrame = QtCore.pyqtProperty(pd.DataFrame, fget=dataFrame, fset=setDataFrame)
+
+    @QtCore.pyqtSlot(int, QtCore.Qt.Orientation, result=str)
+    def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: int = QtCore.Qt.DisplayRole):
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                return self._dataframe.columns[section]
+            else:
+                return str(self._dataframe.index[section])
+        return QtCore.QVariant()
+
+    def rowCount(self, parent=QtCore.QModelIndex()):
+        if parent.isValid():
+            return 0
+        return len(self._dataframe.index)
+
+    def columnCount(self, parent=QtCore.QModelIndex()):
+        if parent.isValid():
+            return 0
+        return self._dataframe.columns.size
+
+    def data(self, index, role=QtCore.Qt.DisplayRole):
+        if not index.isValid() or not (0 <= index.row() < self.rowCount() \
+            and 0 <= index.column() < self.columnCount()):
+            return QtCore.QVariant()
+        row = self._dataframe.index[index.row()]
+        col = self._dataframe.columns[index.column()]
+        dt = self._dataframe[col].dtype
+
+        val = self._dataframe.iloc[row][col]
+        if role == QtCore.Qt.DisplayRole:
+            return str(val)
+        elif role == DataFrameModel.ValueRole:
+            return val
+        if role == DataFrameModel.DtypeRole:
+            return dt
+        return QtCore.QVariant()
+
+    def roleNames(self):
+        roles = {
+            QtCore.Qt.DisplayRole: b'display',
+            DataFrameModel.DtypeRole: b'dtype',
+            DataFrameModel.ValueRole: b'value'
+        }
+        return roles

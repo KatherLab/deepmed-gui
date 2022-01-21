@@ -22,7 +22,7 @@ class Ui_advanced_settings(object):
         self.gridLayout.setObjectName("gridLayout")
         self.maxTileNum = QtWidgets.QSpinBox(self.verticalLayoutWidget)
         self.maxTileNum.setMaximum(1000000000)
-        self.maxTileNum.setProperty("value", 3)
+        self.maxTileNum.setProperty("value", 500)
         self.maxTileNum.setObjectName("maxTileNum")
         self.gridLayout.addWidget(self.maxTileNum, 4, 1, 1, 1)
         self.label_4 = QtWidgets.QLabel(self.verticalLayoutWidget)
