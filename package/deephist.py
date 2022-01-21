@@ -1113,7 +1113,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
         if path != ('', ''):
             self.project_dir_vis = path
-
+            self.load_project_structure(path, self.ui.foldertree_vis)
 
 
         pltf = platform.system()  # to fix probems between different platforms
@@ -1133,7 +1133,7 @@ class Mainwindow_con(QtWidgets.QMainWindow):
 
 
 
-        self.load_project_structure(path, self.ui.foldertree_vis)
+
 
 
 
