@@ -5,7 +5,7 @@ if errorlevel 1 goto errorNoPython
 
 :: Check if virtualenv is installed
 python check_venv.py
-if NOT EXIST GUI_deephist_python-main\env\Scripts\activate (python -m venv env )
+if NOT EXIST env\Scripts\activate (python -m venv env )
 ::Check if git is installed
 git --version
 if errorlevel 1 goto errorNoGit
