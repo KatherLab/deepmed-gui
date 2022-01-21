@@ -14,6 +14,7 @@ if errorlevel 1 goto errorNoGit
 dir
 CALL  env\Scripts\activate  
 pip install -r requirements.txt
+pause
 goto:eof
 :errorNoPython
 echo.
