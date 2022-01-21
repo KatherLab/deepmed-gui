@@ -14,6 +14,10 @@ if errorlevel 1 goto errorNoGit
 dir
 CALL  env\Scripts\activate  
 pip install -r requirements.txt
+
+pushd %~dp0
+cscript shortcutter.vbs
+
 pause
 goto:eof
 :errorNoPython
