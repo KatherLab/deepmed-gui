@@ -8,14 +8,12 @@ Here we share the user interface of DeepMed (Direct End-to-End Pipeline for Medi
 * CUDA-enabled NVIDIA GPU 
 * Python version >= 3.8
 * Pip
+* git
 
-## Installation 
+## Installation (Windows)
 * Download the source code
-* (Optional) create a virtual environment inside the GUI folder (https://docs.python.org/3/tutorial/venv.html)
-* open a terminal/command prompt, direct to the folder directory (open virtual environment)
-* ``pip install -r requirements.txt``
+* run the installer.bat file inside the folder (double-click or run in command prompt)
 
-  * If this does not work, try installing the packages inside "requirements.txt" manually. 
 
 ## How to use the GUI:
 
@@ -40,5 +38,8 @@ Here we share the user interface of DeepMed (Direct End-to-End Pipeline for Medi
 
 ### Visualization
 * Choose a deployed project path.
-* Choose one of the used targets and the desired evaluator.
-* In the subtabs one can find the top/botton tiles, plots of the chosen evaluator, and the logfile of the deployment.
+* Click on the desired file
+    * Images will be visualized in the Image tabs
+    * Tables will be visualized in the Image tabs
+    * The log tab contains the deployment log
+    * the Tiles tab is without function yet 
